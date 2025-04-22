@@ -169,7 +169,7 @@ typedef enum
 typedef struct
 {
   jsc_token_type type;
-  const char *start;
+  const char* start;
   size_t length;
   uint32_t line;
   uint32_t column;
@@ -180,15 +180,15 @@ typedef struct
 
     struct
     {
-      char *data;
+      char* data;
       size_t length;
     } string_value;
 
     struct
     {
-      char *data;
+      char* data;
       size_t length;
-      char *flags;
+      char* flags;
       size_t flags_length;
     } regexp_value;
   };
@@ -198,7 +198,7 @@ typedef struct jsc_tokenizer_state jsc_tokenizer_state;
 
 struct jsc_tokenizer_state
 {
-  const char *source;
+  const char* source;
   size_t source_length;
   size_t position;
 
@@ -211,7 +211,7 @@ struct jsc_tokenizer_state
 
   jsc_token current;
 
-  char *error_message;
+  char* error_message;
 
   JSC_ALIGN(1 << 6)
   char identifier_buffer[JSC_MAX_IDENTIFIER_LENGTH];
@@ -229,12 +229,12 @@ struct jsc_tokenizer_state
 };
 
 jsc_vector_level jsc_get_vector_level(void);
-jsc_tokenizer_state *jsc_tokenizer_init(const char *source, size_t length);
-void jsc_tokenizer_free(jsc_tokenizer_state *state);
-jsc_token jsc_next_token(jsc_tokenizer_state *state);
-bool jsc_tokenizer_has_error(jsc_tokenizer_state *state);
-const char *jsc_tokenizer_get_error(jsc_tokenizer_state *state);
-const char *jsc_token_type_to_string(jsc_token_type type);
+jsc_tokenizer_state* jsc_tokenizer_init(const char* source, size_t length);
+void jsc_tokenizer_free(jsc_tokenizer_state* state);
+jsc_token jsc_next_token(jsc_tokenizer_state* state);
+bool jsc_tokenizer_has_error(jsc_tokenizer_state* state);
+const char* jsc_tokenizer_get_error(jsc_tokenizer_state* state);
+const char* jsc_token_type_to_string(jsc_token_type type);
 bool jsc_token_is_keyword(jsc_token_type type);
 bool jsc_token_is_operator(jsc_token_type type);
 bool jsc_token_is_punctuator(jsc_token_type type);

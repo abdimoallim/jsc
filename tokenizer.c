@@ -6,103 +6,207 @@
 #include <math.h>
 
 static const uint8_t jsc_hex_value[1 << 8] = {
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF};
 
-static const char *jsc_token_names[] = {
-    "NONE",
-    "IDENTIFIER", "STRING", "NUMBER", "REGEXP", "TEMPLATE",
-    "BREAK", "CASE", "CATCH", "CLASS", "CONST", "CONTINUE", "DEBUGGER", "DEFAULT",
-    "DELETE", "DO", "ELSE", "EXPORT", "EXTENDS", "FINALLY", "FOR", "FUNCTION",
-    "IF", "IMPORT", "IN", "INSTANCEOF", "NEW", "RETURN", "SUPER", "SWITCH",
-    "THIS", "THROW", "TRY", "TYPEOF", "VAR", "VOID", "WHILE", "WITH", "YIELD",
-    "AWAIT", "ASYNC", "LET", "STATIC",
-    "TRUE", "FALSE", "NULL", "UNDEFINED",
-    "=", "+", "-", "*", "/", "%", "++", "--", "==", "!=", "===", "!==", ">", "<",
-    ">=", "<=", "&&", "||", "!", "&", "|", "^", "~", "<<", ">>", ">>>", "+=", "-=",
-    "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "|=", "^=", "&&=", "||=", "??",
-    "??=", "?.", "**", "**=", "=>",
-    ";", ":", ",", ".", "?", "(", ")", "[", "]", "{", "}", "...",
-    "TEMPLATE_START", "TEMPLATE_MIDDLE", "TEMPLATE_END",
-    "EOF", "ERROR"};
+static const char* jsc_token_names[] = {"NONE",
+                                        "IDENTIFIER",
+                                        "STRING",
+                                        "NUMBER",
+                                        "REGEXP",
+                                        "TEMPLATE",
+                                        "BREAK",
+                                        "CASE",
+                                        "CATCH",
+                                        "CLASS",
+                                        "CONST",
+                                        "CONTINUE",
+                                        "DEBUGGER",
+                                        "DEFAULT",
+                                        "DELETE",
+                                        "DO",
+                                        "ELSE",
+                                        "EXPORT",
+                                        "EXTENDS",
+                                        "FINALLY",
+                                        "FOR",
+                                        "FUNCTION",
+                                        "IF",
+                                        "IMPORT",
+                                        "IN",
+                                        "INSTANCEOF",
+                                        "NEW",
+                                        "RETURN",
+                                        "SUPER",
+                                        "SWITCH",
+                                        "THIS",
+                                        "THROW",
+                                        "TRY",
+                                        "TYPEOF",
+                                        "VAR",
+                                        "VOID",
+                                        "WHILE",
+                                        "WITH",
+                                        "YIELD",
+                                        "AWAIT",
+                                        "ASYNC",
+                                        "LET",
+                                        "STATIC",
+                                        "TRUE",
+                                        "FALSE",
+                                        "NULL",
+                                        "UNDEFINED",
+                                        "=",
+                                        "+",
+                                        "-",
+                                        "*",
+                                        "/",
+                                        "%",
+                                        "++",
+                                        "--",
+                                        "==",
+                                        "!=",
+                                        "===",
+                                        "!==",
+                                        ">",
+                                        "<",
+                                        ">=",
+                                        "<=",
+                                        "&&",
+                                        "||",
+                                        "!",
+                                        "&",
+                                        "|",
+                                        "^",
+                                        "~",
+                                        "<<",
+                                        ">>",
+                                        ">>>",
+                                        "+=",
+                                        "-=",
+                                        "*=",
+                                        "/=",
+                                        "%=",
+                                        "<<=",
+                                        ">>=",
+                                        ">>>=",
+                                        "&=",
+                                        "|=",
+                                        "^=",
+                                        "&&=",
+                                        "||=",
+                                        "??",
+                                        "??=",
+                                        "?.",
+                                        "**",
+                                        "**=",
+                                        "=>",
+                                        ";",
+                                        ":",
+                                        ",",
+                                        ".",
+                                        "?",
+                                        "(",
+                                        ")",
+                                        "[",
+                                        "]",
+                                        "{",
+                                        "}",
+                                        "...",
+                                        "TEMPLATE_START",
+                                        "TEMPLATE_MIDDLE",
+                                        "TEMPLATE_END",
+                                        "EOF",
+                                        "ERROR"};
 
 static const struct
 {
-  const char *keyword;
+  const char* keyword;
   jsc_token_type type;
-} jsc_keywords[] = {
-    {"break", JSC_TOKEN_BREAK},
-    {"case", JSC_TOKEN_CASE},
-    {"catch", JSC_TOKEN_CATCH},
-    {"class", JSC_TOKEN_CLASS},
-    {"const", JSC_TOKEN_CONST},
-    {"continue", JSC_TOKEN_CONTINUE},
-    {"debugger", JSC_TOKEN_DEBUGGER},
-    {"default", JSC_TOKEN_DEFAULT},
-    {"delete", JSC_TOKEN_DELETE},
-    {"do", JSC_TOKEN_DO},
-    {"else", JSC_TOKEN_ELSE},
-    {"export", JSC_TOKEN_EXPORT},
-    {"extends", JSC_TOKEN_EXTENDS},
-    {"finally", JSC_TOKEN_FINALLY},
-    {"for", JSC_TOKEN_FOR},
-    {"function", JSC_TOKEN_FUNCTION},
-    {"if", JSC_TOKEN_IF},
-    {"import", JSC_TOKEN_IMPORT},
-    {"in", JSC_TOKEN_IN},
-    {"instanceof", JSC_TOKEN_INSTANCEOF},
-    {"new", JSC_TOKEN_NEW},
-    {"return", JSC_TOKEN_RETURN},
-    {"super", JSC_TOKEN_SUPER},
-    {"switch", JSC_TOKEN_SWITCH},
-    {"this", JSC_TOKEN_THIS},
-    {"throw", JSC_TOKEN_THROW},
-    {"try", JSC_TOKEN_TRY},
-    {"typeof", JSC_TOKEN_TYPEOF},
-    {"var", JSC_TOKEN_VAR},
-    {"void", JSC_TOKEN_VOID},
-    {"while", JSC_TOKEN_WHILE},
-    {"with", JSC_TOKEN_WITH},
-    {"yield", JSC_TOKEN_YIELD},
-    {"await", JSC_TOKEN_AWAIT},
-    {"async", JSC_TOKEN_ASYNC},
-    {"let", JSC_TOKEN_LET},
-    {"static", JSC_TOKEN_STATIC},
-    {"true", JSC_TOKEN_TRUE},
-    {"false", JSC_TOKEN_FALSE},
-    {"null", JSC_TOKEN_NULL},
-    {"undefined", JSC_TOKEN_UNDEFINED},
-    {NULL, JSC_TOKEN_NONE}};
+} jsc_keywords[] = {{"break", JSC_TOKEN_BREAK},
+                    {"case", JSC_TOKEN_CASE},
+                    {"catch", JSC_TOKEN_CATCH},
+                    {"class", JSC_TOKEN_CLASS},
+                    {"const", JSC_TOKEN_CONST},
+                    {"continue", JSC_TOKEN_CONTINUE},
+                    {"debugger", JSC_TOKEN_DEBUGGER},
+                    {"default", JSC_TOKEN_DEFAULT},
+                    {"delete", JSC_TOKEN_DELETE},
+                    {"do", JSC_TOKEN_DO},
+                    {"else", JSC_TOKEN_ELSE},
+                    {"export", JSC_TOKEN_EXPORT},
+                    {"extends", JSC_TOKEN_EXTENDS},
+                    {"finally", JSC_TOKEN_FINALLY},
+                    {"for", JSC_TOKEN_FOR},
+                    {"function", JSC_TOKEN_FUNCTION},
+                    {"if", JSC_TOKEN_IF},
+                    {"import", JSC_TOKEN_IMPORT},
+                    {"in", JSC_TOKEN_IN},
+                    {"instanceof", JSC_TOKEN_INSTANCEOF},
+                    {"new", JSC_TOKEN_NEW},
+                    {"return", JSC_TOKEN_RETURN},
+                    {"super", JSC_TOKEN_SUPER},
+                    {"switch", JSC_TOKEN_SWITCH},
+                    {"this", JSC_TOKEN_THIS},
+                    {"throw", JSC_TOKEN_THROW},
+                    {"try", JSC_TOKEN_TRY},
+                    {"typeof", JSC_TOKEN_TYPEOF},
+                    {"var", JSC_TOKEN_VAR},
+                    {"void", JSC_TOKEN_VOID},
+                    {"while", JSC_TOKEN_WHILE},
+                    {"with", JSC_TOKEN_WITH},
+                    {"yield", JSC_TOKEN_YIELD},
+                    {"await", JSC_TOKEN_AWAIT},
+                    {"async", JSC_TOKEN_ASYNC},
+                    {"let", JSC_TOKEN_LET},
+                    {"static", JSC_TOKEN_STATIC},
+                    {"true", JSC_TOKEN_TRUE},
+                    {"false", JSC_TOKEN_FALSE},
+                    {"null", JSC_TOKEN_NULL},
+                    {"undefined", JSC_TOKEN_UNDEFINED},
+                    {NULL, JSC_TOKEN_NONE}};
 
-#define JSC_IS_WHITESPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == '\f' || (c) == '\v')
-#define JSC_IS_LETTER(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+#define JSC_IS_WHITESPACE(c)                                                   \
+  ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == '\f' ||   \
+   (c) == '\v')
+#define JSC_IS_LETTER(c)                                                       \
+  (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define JSC_IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
-#define JSC_IS_HEX_DIGIT(c) (JSC_IS_DIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
+#define JSC_IS_HEX_DIGIT(c)                                                    \
+  (JSC_IS_DIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
 #define JSC_IS_OCTAL_DIGIT(c) ((c) >= '0' && (c) <= '7')
 #define JSC_IS_BINARY_DIGIT(c) ((c) == '0' || (c) == '1')
-#define JSC_IS_IDENTIFIER_START(c) (JSC_IS_LETTER(c) || (c) == '_' || (c) == '$')
-#define JSC_IS_IDENTIFIER_PART(c) (JSC_IS_IDENTIFIER_START(c) || JSC_IS_DIGIT(c))
+#define JSC_IS_IDENTIFIER_START(c)                                             \
+  (JSC_IS_LETTER(c) || (c) == '_' || (c) == '$')
+#define JSC_IS_IDENTIFIER_PART(c)                                              \
+  (JSC_IS_IDENTIFIER_START(c) || JSC_IS_DIGIT(c))
 #define JSC_IS_LINE_TERMINATOR(c) ((c) == '\n' || (c) == '\r')
 
-static void jsc_vec_scan_identifier(jsc_tokenizer_state *state);
-static void jsc_scan_string(jsc_tokenizer_state *state, char quote);
-static void jsc_scan_template(jsc_tokenizer_state *state);
-static void jsc_scan_number(jsc_tokenizer_state *state);
-static void jsc_scan_regexp(jsc_tokenizer_state *state);
+static void jsc_vec_scan_identifier(jsc_tokenizer_state* state);
+static void jsc_scan_string(jsc_tokenizer_state* state, char quote);
+static void jsc_scan_template(jsc_tokenizer_state* state);
+static void jsc_scan_number(jsc_tokenizer_state* state);
+static void jsc_scan_regexp(jsc_tokenizer_state* state);
 
 jsc_vector_level jsc_get_vector_level(void)
 {
@@ -127,7 +231,7 @@ jsc_vector_level jsc_get_vector_level(void)
 #endif
 }
 
-static void jsc_set_token_error(jsc_tokenizer_state *state, const char *message)
+static void jsc_set_token_error(jsc_tokenizer_state* state, const char* message)
 {
   if (state->error_message)
   {
@@ -138,7 +242,7 @@ static void jsc_set_token_error(jsc_tokenizer_state *state, const char *message)
   state->current.type = JSC_TOKEN_ERROR;
 }
 
-static JSC_FORCE_INLINE void jsc_advance_position(jsc_tokenizer_state *state)
+static JSC_FORCE_INLINE void jsc_advance_position(jsc_tokenizer_state* state)
 {
   if (JSC_UNLIKELY(state->position >= state->source_length))
   {
@@ -156,7 +260,8 @@ static JSC_FORCE_INLINE void jsc_advance_position(jsc_tokenizer_state *state)
   }
   else if (c == '\r')
   {
-    if (state->position < state->source_length && state->source[state->position] == '\n')
+    if (state->position < state->source_length &&
+        state->source[state->position] == '\n')
     {
       state->position++;
     }
@@ -170,7 +275,7 @@ static JSC_FORCE_INLINE void jsc_advance_position(jsc_tokenizer_state *state)
   }
 }
 
-static JSC_FORCE_INLINE char jsc_peek(jsc_tokenizer_state *state)
+static JSC_FORCE_INLINE char jsc_peek(jsc_tokenizer_state* state)
 {
   if (JSC_UNLIKELY(state->position >= state->source_length))
   {
@@ -180,7 +285,7 @@ static JSC_FORCE_INLINE char jsc_peek(jsc_tokenizer_state *state)
   return state->source[state->position];
 }
 
-static JSC_FORCE_INLINE char jsc_peek_n(jsc_tokenizer_state *state, size_t n)
+static JSC_FORCE_INLINE char jsc_peek_n(jsc_tokenizer_state* state, size_t n)
 {
   if (JSC_UNLIKELY(state->position + n >= state->source_length))
   {
@@ -190,7 +295,8 @@ static JSC_FORCE_INLINE char jsc_peek_n(jsc_tokenizer_state *state, size_t n)
   return state->source[state->position + n];
 }
 
-static JSC_FORCE_INLINE bool jsc_match(jsc_tokenizer_state *state, char expected)
+static JSC_FORCE_INLINE bool jsc_match(jsc_tokenizer_state* state,
+                                       char expected)
 {
   if (jsc_peek(state) != expected)
   {
@@ -202,7 +308,7 @@ static JSC_FORCE_INLINE bool jsc_match(jsc_tokenizer_state *state, char expected
   return true;
 }
 
-static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
+static void jsc_vec_skip_whitespace(jsc_tokenizer_state* state)
 {
   size_t remaining = state->source_length - state->position;
 
@@ -218,9 +324,11 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
 
     while (remaining >= (1 << 6))
     {
-      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                   _MM_HINT_T0);
 
-      __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+      __m512i chunk =
+          _mm512_loadu_si512((const __m512i*)(state->source + state->position));
 
       __mmask64 is_space = _mm512_cmpeq_epi8_mask(chunk, spaces);
       __mmask64 is_tab = _mm512_cmpeq_epi8_mask(chunk, tabs);
@@ -229,7 +337,8 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
       __mmask64 is_ff = _mm512_cmpeq_epi8_mask(chunk, form_feeds);
       __mmask64 is_vt = _mm512_cmpeq_epi8_mask(chunk, vertical_tabs);
 
-      __mmask64 is_whitespace = is_space | is_tab | is_newline | is_cr | is_ff | is_vt;
+      __mmask64 is_whitespace =
+          is_space | is_tab | is_newline | is_cr | is_ff | is_vt;
 
       if (is_whitespace == 0)
       {
@@ -287,9 +396,11 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
 
     while (remaining >= (1 << 5))
     {
-      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                   _MM_HINT_T0);
 
-      __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+      __m256i chunk =
+          _mm256_loadu_si256((const __m256i*)(state->source + state->position));
 
       __m256i is_space = _mm256_cmpeq_epi8(chunk, spaces);
       __m256i is_tab = _mm256_cmpeq_epi8(chunk, tabs);
@@ -298,11 +409,10 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
       __m256i is_ff = _mm256_cmpeq_epi8(chunk, form_feeds);
       __m256i is_vt = _mm256_cmpeq_epi8(chunk, vertical_tabs);
 
-      __m256i is_whitespace = _mm256_or_si256(
-          _mm256_or_si256(
-              _mm256_or_si256(is_space, is_tab),
-              _mm256_or_si256(is_newline, is_cr)),
-          _mm256_or_si256(is_ff, is_vt));
+      __m256i is_whitespace =
+          _mm256_or_si256(_mm256_or_si256(_mm256_or_si256(is_space, is_tab),
+                                          _mm256_or_si256(is_newline, is_cr)),
+                          _mm256_or_si256(is_ff, is_vt));
 
       uint32_t mask = _mm256_movemask_epi8(is_whitespace);
 
@@ -362,9 +472,11 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
 
     while (remaining >= (1 << 4))
     {
-      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                   _MM_HINT_T0);
 
-      __m128i chunk = _mm_loadu_si128((const __m128i *)(state->source + state->position));
+      __m128i chunk =
+          _mm_loadu_si128((const __m128i*)(state->source + state->position));
 
       __m128i is_space = _mm_cmpeq_epi8(chunk, spaces);
       __m128i is_tab = _mm_cmpeq_epi8(chunk, tabs);
@@ -373,11 +485,10 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
       __m128i is_ff = _mm_cmpeq_epi8(chunk, form_feeds);
       __m128i is_vt = _mm_cmpeq_epi8(chunk, vertical_tabs);
 
-      __m128i is_whitespace = _mm_or_si128(
-          _mm_or_si128(
-              _mm_or_si128(is_space, is_tab),
-              _mm_or_si128(is_newline, is_cr)),
-          _mm_or_si128(is_ff, is_vt));
+      __m128i is_whitespace =
+          _mm_or_si128(_mm_or_si128(_mm_or_si128(is_space, is_tab),
+                                    _mm_or_si128(is_newline, is_cr)),
+                       _mm_or_si128(is_ff, is_vt));
 
       uint16_t mask = _mm_movemask_epi8(is_whitespace);
 
@@ -436,7 +547,8 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
 
     while (remaining >= (1 << 4))
     {
-      __m128i chunk = _mm_loadu_si128((const __m128i *)(state->source + state->position));
+      __m128i chunk =
+          _mm_loadu_si128((const __m128i*)(state->source + state->position));
 
       __m128i is_space = _mm_cmpeq_epi8(chunk, spaces);
       __m128i is_tab = _mm_cmpeq_epi8(chunk, tabs);
@@ -445,11 +557,10 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
       __m128i is_ff = _mm_cmpeq_epi8(chunk, form_feeds);
       __m128i is_vt = _mm_cmpeq_epi8(chunk, vertical_tabs);
 
-      __m128i is_whitespace = _mm_or_si128(
-          _mm_or_si128(
-              _mm_or_si128(is_space, is_tab),
-              _mm_or_si128(is_newline, is_cr)),
-          _mm_or_si128(is_ff, is_vt));
+      __m128i is_whitespace =
+          _mm_or_si128(_mm_or_si128(_mm_or_si128(is_space, is_tab),
+                                    _mm_or_si128(is_newline, is_cr)),
+                       _mm_or_si128(is_ff, is_vt));
 
       uint16_t mask = _mm_movemask_epi8(is_whitespace);
 
@@ -521,7 +632,7 @@ static void jsc_vec_skip_whitespace(jsc_tokenizer_state *state)
   }
 }
 
-static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
+static void jsc_vec_skip_comment(jsc_tokenizer_state* state)
 {
   if (jsc_peek(state) == '/' && jsc_peek_n(state, 1) == '/')
   {
@@ -538,9 +649,11 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 6))
       {
-        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                     _MM_HINT_T0);
 
-        __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+        __m512i chunk = _mm512_loadu_si512(
+            (const __m512i*)(state->source + state->position));
 
         __mmask64 is_newline = _mm512_cmpeq_epi8_mask(chunk, newlines);
         __mmask64 is_cr = _mm512_cmpeq_epi8_mask(chunk, carriage_returns);
@@ -569,9 +682,11 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 5))
       {
-        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                     _MM_HINT_T0);
 
-        __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+        __m256i chunk = _mm256_loadu_si256(
+            (const __m256i*)(state->source + state->position));
 
         __m256i is_newline = _mm256_cmpeq_epi8(chunk, newlines);
         __m256i is_cr = _mm256_cmpeq_epi8(chunk, carriage_returns);
@@ -602,9 +717,11 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 4))
       {
-        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                     _MM_HINT_T0);
 
-        __m128i chunk = _mm_loadu_si128((const __m128i *)(state->source + state->position));
+        __m128i chunk =
+            _mm_loadu_si128((const __m128i*)(state->source + state->position));
 
         __m128i is_newline = _mm_cmpeq_epi8(chunk, newlines);
         __m128i is_cr = _mm_cmpeq_epi8(chunk, carriage_returns);
@@ -635,7 +752,8 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 4))
       {
-        __m128i chunk = _mm_loadu_si128((const __m128i *)(state->source + state->position));
+        __m128i chunk =
+            _mm_loadu_si128((const __m128i*)(state->source + state->position));
 
         __m128i is_newline = _mm_cmpeq_epi8(chunk, newlines);
         __m128i is_cr = _mm_cmpeq_epi8(chunk, carriage_returns);
@@ -694,19 +812,24 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 6))
       {
-        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                     _MM_HINT_T0);
 
-        __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+        __m512i chunk = _mm512_loadu_si512(
+            (const __m512i*)(state->source + state->position));
 
         __mmask64 is_star = _mm512_cmpeq_epi8_mask(chunk, stars);
 
         if (is_star == 0)
         {
           last_char = '\0';
-          uint32_t newline_count = _mm512_movepi8_mask(_mm512_cmpeq_epi8(chunk, _mm512_set1_epi8('\n')));
-          uint32_t cr_count = _mm512_movepi8_mask(_mm512_cmpeq_epi8(chunk, _mm512_set1_epi8('\r')));
+          uint32_t newline_count = _mm512_movepi8_mask(
+              _mm512_cmpeq_epi8(chunk, _mm512_set1_epi8('\n')));
+          uint32_t cr_count = _mm512_movepi8_mask(
+              _mm512_cmpeq_epi8(chunk, _mm512_set1_epi8('\r')));
 
-          state->line += _mm_popcnt_u32(newline_count) + _mm_popcnt_u32(cr_count);
+          state->line +=
+              _mm_popcnt_u32(newline_count) + _mm_popcnt_u32(cr_count);
           state->position += (1 << 6);
           remaining -= (1 << 6);
           continue;
@@ -735,9 +858,11 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 5))
       {
-        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                     _MM_HINT_T0);
 
-        __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+        __m256i chunk = _mm256_loadu_si256(
+            (const __m256i*)(state->source + state->position));
 
         __m256i is_star = _mm256_cmpeq_epi8(chunk, stars);
 
@@ -785,9 +910,11 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
 
       while (remaining >= (1 << 4))
       {
-        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+        _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                     _MM_HINT_T0);
 
-        __m128i chunk = _mm_loadu_si128((const __m128i *)(state->source + state->position));
+        __m128i chunk =
+            _mm_loadu_si128((const __m128i*)(state->source + state->position));
 
         __m128i is_star = _mm_cmpeq_epi8(chunk, stars);
 
@@ -844,7 +971,7 @@ static void jsc_vec_skip_comment(jsc_tokenizer_state *state)
   }
 }
 
-static void jsc_skip_whitespace_and_comments(jsc_tokenizer_state *state)
+static void jsc_skip_whitespace_and_comments(jsc_tokenizer_state* state)
 {
   bool skipped_something;
 
@@ -854,7 +981,8 @@ static void jsc_skip_whitespace_and_comments(jsc_tokenizer_state *state)
 
     jsc_vec_skip_whitespace(state);
 
-    if (jsc_peek(state) == '/' && (jsc_peek_n(state, 1) == '/' || jsc_peek_n(state, 1) == '*'))
+    if (jsc_peek(state) == '/' &&
+        (jsc_peek_n(state, 1) == '/' || jsc_peek_n(state, 1) == '*'))
     {
       jsc_vec_skip_comment(state);
     }
@@ -863,7 +991,7 @@ static void jsc_skip_whitespace_and_comments(jsc_tokenizer_state *state)
   } while (skipped_something);
 }
 
-static bool jsc_check_keyword(const char *str, size_t len, jsc_token *token)
+static bool jsc_check_keyword(const char* str, size_t len, jsc_token* token)
 {
   for (int i = 0; jsc_keywords[i].keyword != NULL; i++)
   {
@@ -878,9 +1006,9 @@ static bool jsc_check_keyword(const char *str, size_t len, jsc_token *token)
   return false;
 }
 
-static void jsc_scan_template(jsc_tokenizer_state *state)
+static void jsc_scan_template(jsc_tokenizer_state* state)
 {
-  jsc_token *token = &state->current;
+  jsc_token* token = &state->current;
   token->start = state->source + state->position - 1;
   token->line = state->line;
   token->column = state->column - 1;
@@ -916,7 +1044,8 @@ static void jsc_scan_template(jsc_tokenizer_state *state)
       {
         state->string_buffer[string_length] = '\0';
         token->string_value.data = malloc(string_length + 1);
-        memcpy(token->string_value.data, state->string_buffer, string_length + 1);
+        memcpy(token->string_value.data, state->string_buffer,
+               string_length + 1);
         token->string_value.length = string_length;
 
         token->type = JSC_TOKEN_STRING;
@@ -926,7 +1055,8 @@ static void jsc_scan_template(jsc_tokenizer_state *state)
       {
         state->string_buffer[string_length] = '\0';
         token->string_value.data = malloc(string_length + 1);
-        memcpy(token->string_value.data, state->string_buffer, string_length + 1);
+        memcpy(token->string_value.data, state->string_buffer,
+               string_length + 1);
         token->string_value.length = string_length;
 
         token->type = JSC_TOKEN_TEMPLATE_END;
@@ -1017,14 +1147,19 @@ static void jsc_scan_template(jsc_tokenizer_state *state)
         }
         else if (hex_value < 0x800)
         {
-          state->string_buffer[string_length++] = (char)(0xC0 | (hex_value >> 6));
-          state->string_buffer[string_length++] = (char)(0x80 | (hex_value & 0x3F));
+          state->string_buffer[string_length++] =
+              (char)(0xC0 | (hex_value >> 6));
+          state->string_buffer[string_length++] =
+              (char)(0x80 | (hex_value & 0x3F));
         }
         else
         {
-          state->string_buffer[string_length++] = (char)(0xE0 | (hex_value >> 12));
-          state->string_buffer[string_length++] = (char)(0x80 | ((hex_value >> 6) & 0x3F));
-          state->string_buffer[string_length++] = (char)(0x80 | (hex_value & 0x3F));
+          state->string_buffer[string_length++] =
+              (char)(0xE0 | (hex_value >> 12));
+          state->string_buffer[string_length++] =
+              (char)(0x80 | ((hex_value >> 6) & 0x3F));
+          state->string_buffer[string_length++] =
+              (char)(0x80 | (hex_value & 0x3F));
         }
         break;
       }
@@ -1047,7 +1182,8 @@ static void jsc_scan_template(jsc_tokenizer_state *state)
           return;
         }
 
-        uint8_t hex_value = (jsc_hex_value[(unsigned char)hex1] << 4) | jsc_hex_value[(unsigned char)hex2];
+        uint8_t hex_value = (jsc_hex_value[(unsigned char)hex1] << 4) |
+                            jsc_hex_value[(unsigned char)hex2];
         state->string_buffer[string_length++] = (char)hex_value;
         break;
       }
@@ -1071,9 +1207,9 @@ static void jsc_scan_template(jsc_tokenizer_state *state)
   token->length = state->position - (token->start - state->source);
 }
 
-static void jsc_scan_regexp(jsc_tokenizer_state *state)
+static void jsc_scan_regexp(jsc_tokenizer_state* state)
 {
-  jsc_token *token = &state->current;
+  jsc_token* token = &state->current;
   token->type = JSC_TOKEN_REGEXP;
   token->start = state->source + state->position - 1;
   token->line = state->line;
@@ -1149,13 +1285,14 @@ static void jsc_scan_regexp(jsc_tokenizer_state *state)
 
   state->regexp_flags_buffer[flags_length] = '\0';
   token->regexp_value.flags = malloc(flags_length + 1);
-  memcpy(token->regexp_value.flags, state->regexp_flags_buffer, flags_length + 1);
+  memcpy(token->regexp_value.flags, state->regexp_flags_buffer,
+         flags_length + 1);
   token->regexp_value.flags_length = flags_length;
 }
 
-static void jsc_scan_number(jsc_tokenizer_state *state)
+static void jsc_scan_number(jsc_tokenizer_state* state)
 {
-  jsc_token *token = &state->current;
+  jsc_token* token = &state->current;
   token->type = JSC_TOKEN_NUMBER;
   token->start = state->source + state->position - 1;
   token->line = state->line;
@@ -1180,7 +1317,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
       state->number_buffer[number_length++] = next;
 
 #if defined(__AVX512F__)
-      if (state->vector_level >= JSC_SIMD_AVX512F && state->position + (1 << 6) <= state->source_length)
+      if (state->vector_level >= JSC_SIMD_AVX512F &&
+          state->position + (1 << 6) <= state->source_length)
       {
         __m512i zero = _mm512_set1_epi8('0');
         __m512i nine = _mm512_set1_epi8('9');
@@ -1189,21 +1327,22 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
         __m512i a_upper = _mm512_set1_epi8('A');
         __m512i f_upper = _mm512_set1_epi8('F');
 
-        __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+        __m512i chunk = _mm512_loadu_si512(
+            (const __m512i*)(state->source + state->position));
 
-        __mmask64 is_digit = _mm512_kand(
-            _mm512_cmpge_epi8_mask(chunk, zero),
-            _mm512_cmple_epi8_mask(chunk, nine));
+        __mmask64 is_digit = _mm512_kand(_mm512_cmpge_epi8_mask(chunk, zero),
+                                         _mm512_cmple_epi8_mask(chunk, nine));
 
-        __mmask64 is_lower_hex = _mm512_kand(
-            _mm512_cmpge_epi8_mask(chunk, a_lower),
-            _mm512_cmple_epi8_mask(chunk, f_lower));
+        __mmask64 is_lower_hex =
+            _mm512_kand(_mm512_cmpge_epi8_mask(chunk, a_lower),
+                        _mm512_cmple_epi8_mask(chunk, f_lower));
 
-        __mmask64 is_upper_hex = _mm512_kand(
-            _mm512_cmpge_epi8_mask(chunk, a_upper),
-            _mm512_cmple_epi8_mask(chunk, f_upper));
+        __mmask64 is_upper_hex =
+            _mm512_kand(_mm512_cmpge_epi8_mask(chunk, a_upper),
+                        _mm512_cmple_epi8_mask(chunk, f_upper));
 
-        __mmask64 is_hex_digit = _mm512_kor(_mm512_kor(is_digit, is_lower_hex), is_upper_hex);
+        __mmask64 is_hex_digit =
+            _mm512_kor(_mm512_kor(is_digit, is_lower_hex), is_upper_hex);
 
         if (is_hex_digit)
         {
@@ -1215,7 +1354,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
             {
               for (int i = 0; i < trailing_zeros; i++)
               {
-                state->number_buffer[number_length++] = state->source[state->position + i];
+                state->number_buffer[number_length++] =
+                    state->source[state->position + i];
               }
 
               state->position += trailing_zeros;
@@ -1225,7 +1365,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
         }
       }
 #elif defined(__AVX2__)
-      if (state->vector_level >= JSC_SIMD_AVX2 && state->position + (1 << 5) <= state->source_length)
+      if (state->vector_level >= JSC_SIMD_AVX2 &&
+          state->position + (1 << 5) <= state->source_length)
       {
         __m256i zero = _mm256_set1_epi8('0');
         __m256i nine = _mm256_set1_epi8('9');
@@ -1234,21 +1375,29 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
         __m256i a_upper = _mm256_set1_epi8('A');
         __m256i f_upper = _mm256_set1_epi8('F');
 
-        __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+        __m256i chunk = _mm256_loadu_si256(
+            (const __m256i*)(state->source + state->position));
 
         __m256i is_digit = _mm256_and_si256(
-            _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(zero, _mm256_set1_epi8(1))),
-            _mm256_cmpgt_epi8(_mm256_add_epi8(nine, _mm256_set1_epi8(1)), chunk));
+            _mm256_cmpgt_epi8(chunk,
+                              _mm256_sub_epi8(zero, _mm256_set1_epi8(1))),
+            _mm256_cmpgt_epi8(_mm256_add_epi8(nine, _mm256_set1_epi8(1)),
+                              chunk));
 
         __m256i is_lower_hex = _mm256_and_si256(
-            _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(a_lower, _mm256_set1_epi8(1))),
-            _mm256_cmpgt_epi8(_mm256_add_epi8(f_lower, _mm256_set1_epi8(1)), chunk));
+            _mm256_cmpgt_epi8(chunk,
+                              _mm256_sub_epi8(a_lower, _mm256_set1_epi8(1))),
+            _mm256_cmpgt_epi8(_mm256_add_epi8(f_lower, _mm256_set1_epi8(1)),
+                              chunk));
 
         __m256i is_upper_hex = _mm256_and_si256(
-            _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(a_upper, _mm256_set1_epi8(1))),
-            _mm256_cmpgt_epi8(_mm256_add_epi8(f_upper, _mm256_set1_epi8(1)), chunk));
+            _mm256_cmpgt_epi8(chunk,
+                              _mm256_sub_epi8(a_upper, _mm256_set1_epi8(1))),
+            _mm256_cmpgt_epi8(_mm256_add_epi8(f_upper, _mm256_set1_epi8(1)),
+                              chunk));
 
-        __m256i is_hex_digit = _mm256_or_si256(_mm256_or_si256(is_digit, is_lower_hex), is_upper_hex);
+        __m256i is_hex_digit = _mm256_or_si256(
+            _mm256_or_si256(is_digit, is_lower_hex), is_upper_hex);
 
         uint32_t mask = _mm256_movemask_epi8(is_hex_digit);
 
@@ -1262,7 +1411,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
             {
               for (int i = 0; i < trailing_zeros; i++)
               {
-                state->number_buffer[number_length++] = state->source[state->position + i];
+                state->number_buffer[number_length++] =
+                    state->source[state->position + i];
               }
 
               state->position += trailing_zeros;
@@ -1371,16 +1521,17 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
   if (!is_hex && !is_binary && !is_octal)
   {
 #if defined(__AVX512F__)
-    if (state->vector_level >= JSC_SIMD_AVX512F && state->position + (1 << 6) <= state->source_length)
+    if (state->vector_level >= JSC_SIMD_AVX512F &&
+        state->position + (1 << 6) <= state->source_length)
     {
       __m512i zero = _mm512_set1_epi8('0');
       __m512i nine = _mm512_set1_epi8('9');
 
-      __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+      __m512i chunk =
+          _mm512_loadu_si512((const __m512i*)(state->source + state->position));
 
-      __mmask64 is_digit = _mm512_kand(
-          _mm512_cmpge_epi8_mask(chunk, zero),
-          _mm512_cmple_epi8_mask(chunk, nine));
+      __mmask64 is_digit = _mm512_kand(_mm512_cmpge_epi8_mask(chunk, zero),
+                                       _mm512_cmple_epi8_mask(chunk, nine));
 
       if (is_digit)
       {
@@ -1392,7 +1543,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
           {
             for (int i = 0; i < trailing_zeros; i++)
             {
-              state->number_buffer[number_length++] = state->source[state->position + i];
+              state->number_buffer[number_length++] =
+                  state->source[state->position + i];
             }
 
             state->position += trailing_zeros;
@@ -1402,12 +1554,14 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
       }
     }
 #elif defined(__AVX2__)
-    if (state->vector_level >= JSC_SIMD_AVX2 && state->position + (1 << 5) <= state->source_length)
+    if (state->vector_level >= JSC_SIMD_AVX2 &&
+        state->position + (1 << 5) <= state->source_length)
     {
       __m256i zero = _mm256_set1_epi8('0');
       __m256i nine = _mm256_set1_epi8('9');
 
-      __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+      __m256i chunk =
+          _mm256_loadu_si256((const __m256i*)(state->source + state->position));
 
       __m256i is_digit = _mm256_and_si256(
           _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(zero, _mm256_set1_epi8(1))),
@@ -1425,7 +1579,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
           {
             for (int i = 0; i < trailing_zeros; i++)
             {
-              state->number_buffer[number_length++] = state->source[state->position + i];
+              state->number_buffer[number_length++] =
+                  state->source[state->position + i];
             }
 
             state->position += trailing_zeros;
@@ -1463,16 +1618,17 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
       }
 
 #if defined(__AVX512F__)
-      if (state->vector_level >= JSC_SIMD_AVX512F && state->position + (1 << 6) <= state->source_length)
+      if (state->vector_level >= JSC_SIMD_AVX512F &&
+          state->position + (1 << 6) <= state->source_length)
       {
         __m512i zero = _mm512_set1_epi8('0');
         __m512i nine = _mm512_set1_epi8('9');
 
-        __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+        __m512i chunk = _mm512_loadu_si512(
+            (const __m512i*)(state->source + state->position));
 
-        __mmask64 is_digit = _mm512_kand(
-            _mm512_cmpge_epi8_mask(chunk, zero),
-            _mm512_cmple_epi8_mask(chunk, nine));
+        __mmask64 is_digit = _mm512_kand(_mm512_cmpge_epi8_mask(chunk, zero),
+                                         _mm512_cmple_epi8_mask(chunk, nine));
 
         if (is_digit)
         {
@@ -1484,7 +1640,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
             {
               for (int i = 0; i < trailing_zeros; i++)
               {
-                state->number_buffer[number_length++] = state->source[state->position + i];
+                state->number_buffer[number_length++] =
+                    state->source[state->position + i];
               }
 
               state->position += trailing_zeros;
@@ -1494,16 +1651,20 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
         }
       }
 #elif defined(__AVX2__)
-      if (state->vector_level >= JSC_SIMD_AVX2 && state->position + (1 << 5) <= state->source_length)
+      if (state->vector_level >= JSC_SIMD_AVX2 &&
+          state->position + (1 << 5) <= state->source_length)
       {
         __m256i zero = _mm256_set1_epi8('0');
         __m256i nine = _mm256_set1_epi8('9');
 
-        __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+        __m256i chunk = _mm256_loadu_si256(
+            (const __m256i*)(state->source + state->position));
 
         __m256i is_digit = _mm256_and_si256(
-            _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(zero, _mm256_set1_epi8(1))),
-            _mm256_cmpgt_epi8(_mm256_add_epi8(nine, _mm256_set1_epi8(1)), chunk));
+            _mm256_cmpgt_epi8(chunk,
+                              _mm256_sub_epi8(zero, _mm256_set1_epi8(1))),
+            _mm256_cmpgt_epi8(_mm256_add_epi8(nine, _mm256_set1_epi8(1)),
+                              chunk));
 
         uint32_t mask = _mm256_movemask_epi8(is_digit);
 
@@ -1517,7 +1678,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
             {
               for (int i = 0; i < trailing_zeros; i++)
               {
-                state->number_buffer[number_length++] = state->source[state->position + i];
+                state->number_buffer[number_length++] =
+                    state->source[state->position + i];
               }
 
               state->position += trailing_zeros;
@@ -1596,7 +1758,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
 
         if (!has_exponent)
         {
-          jsc_set_token_error(state, "Invalid number literal: missing exponent");
+          jsc_set_token_error(state,
+                              "Invalid number literal: missing exponent");
           return;
         }
       }
@@ -1613,7 +1776,8 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
   {
     token->number_value = strtol(state->number_buffer + 2, NULL, 2);
   }
-  else if (is_octal && state->number_buffer[0] == '0' && state->number_buffer[1] >= '0' && state->number_buffer[1] <= '7')
+  else if (is_octal && state->number_buffer[0] == '0' &&
+           state->number_buffer[1] >= '0' && state->number_buffer[1] <= '7')
   {
     token->number_value = strtol(state->number_buffer, NULL, 8);
   }
@@ -1625,9 +1789,10 @@ static void jsc_scan_number(jsc_tokenizer_state *state)
   token->length = state->position - (token->start - state->source);
 }
 
-jsc_tokenizer_state *jsc_tokenizer_init(const char *source, size_t length)
+jsc_tokenizer_state* jsc_tokenizer_init(const char* source, size_t length)
 {
-  jsc_tokenizer_state *state = (jsc_tokenizer_state *)malloc(sizeof(jsc_tokenizer_state));
+  jsc_tokenizer_state* state =
+      (jsc_tokenizer_state*)malloc(sizeof(jsc_tokenizer_state));
 
   if (!state)
   {
@@ -1654,7 +1819,7 @@ jsc_tokenizer_state *jsc_tokenizer_init(const char *source, size_t length)
   return state;
 }
 
-jsc_token jsc_next_token(jsc_tokenizer_state *state)
+jsc_token jsc_next_token(jsc_tokenizer_state* state)
 {
   jsc_token token;
   memset(&token, 0, sizeof(jsc_token));
@@ -1793,7 +1958,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
     }
     else if (c == '&')
     {
-      if (state->position < state->source_length && state->source[state->position] == '&')
+      if (state->position < state->source_length &&
+          state->source[state->position] == '&')
       {
         state->position++;
         state->column++;
@@ -1806,7 +1972,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
     }
     else if (c == '|')
     {
-      if (state->position < state->source_length && state->source[state->position] == '|')
+      if (state->position < state->source_length &&
+          state->source[state->position] == '|')
       {
         state->position++;
         state->column++;
@@ -1819,12 +1986,14 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
     }
     else if (c == '!')
     {
-      if (state->position < state->source_length && state->source[state->position] == '=')
+      if (state->position < state->source_length &&
+          state->source[state->position] == '=')
       {
         state->position++;
         state->column++;
 
-        if (state->position < state->source_length && state->source[state->position] == '=')
+        if (state->position < state->source_length &&
+            state->source[state->position] == '=')
         {
           state->position++;
           state->column++;
@@ -1849,7 +2018,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
           state->position++;
           state->column++;
 
-          if (state->position < state->source_length && state->source[state->position] == '=')
+          if (state->position < state->source_length &&
+              state->source[state->position] == '=')
           {
             state->position++;
             state->column++;
@@ -1952,7 +2122,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
           state->position++;
           state->column++;
 
-          if (state->position < state->source_length && state->source[state->position] == '=')
+          if (state->position < state->source_length &&
+              state->source[state->position] == '=')
           {
             state->position++;
             state->column++;
@@ -1981,7 +2152,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
     }
     else if (c == '/')
     {
-      if (state->position < state->source_length && state->source[state->position] == '=')
+      if (state->position < state->source_length &&
+          state->source[state->position] == '=')
       {
         state->position++;
         state->column++;
@@ -2000,7 +2172,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
         {
           state->position++;
           state->column++;
-          if (state->position < state->source_length && state->source[state->position] == '=')
+          if (state->position < state->source_length &&
+              state->source[state->position] == '=')
           {
             state->position++;
             state->column++;
@@ -2035,7 +2208,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
         {
           state->position++;
           state->column++;
-          if (state->position < state->source_length && state->source[state->position] == '=')
+          if (state->position < state->source_length &&
+              state->source[state->position] == '=')
           {
             state->position++;
             state->column++;
@@ -2071,12 +2245,14 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
           state->position++;
           state->column++;
 
-          if (state->position < state->source_length && state->source[state->position] == '>')
+          if (state->position < state->source_length &&
+              state->source[state->position] == '>')
           {
             state->position++;
             state->column++;
 
-            if (state->position < state->source_length && state->source[state->position] == '=')
+            if (state->position < state->source_length &&
+                state->source[state->position] == '=')
             {
               state->position++;
               state->column++;
@@ -2087,7 +2263,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
               token.type = JSC_TOKEN_UNSIGNED_RIGHT_SHIFT;
             }
           }
-          else if (state->position < state->source_length && state->source[state->position] == '=')
+          else if (state->position < state->source_length &&
+                   state->source[state->position] == '=')
           {
             state->position++;
             state->column++;
@@ -2335,7 +2512,8 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
       size_t start = state->position - 1;
 
       while (state->position < state->source_length &&
-             ((state->source[state->position] >= '0' && state->source[state->position] <= '9') ||
+             ((state->source[state->position] >= '0' &&
+               state->source[state->position] <= '9') ||
               state->source[state->position] == '.'))
       {
         state->position++;
@@ -2343,20 +2521,24 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
       }
 
       size_t len = state->position - start;
-      char *numstr = malloc(len + 1);
+      char* numstr = malloc(len + 1);
       memcpy(numstr, state->source + start, len);
       numstr[len] = '\0';
       token.number_value = atof(numstr);
       free(numstr);
     }
-    else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '$')
+    else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' ||
+             c == '$')
     {
       size_t start = state->position - 1;
 
       while (state->position < state->source_length &&
-             ((state->source[state->position] >= 'a' && state->source[state->position] <= 'z') ||
-              (state->source[state->position] >= 'A' && state->source[state->position] <= 'Z') ||
-              (state->source[state->position] >= '0' && state->source[state->position] <= '9') ||
+             ((state->source[state->position] >= 'a' &&
+               state->source[state->position] <= 'z') ||
+              (state->source[state->position] >= 'A' &&
+               state->source[state->position] <= 'Z') ||
+              (state->source[state->position] >= '0' &&
+               state->source[state->position] <= '9') ||
               state->source[state->position] == '_' ||
               state->source[state->position] == '$'))
       {
@@ -2476,7 +2658,7 @@ jsc_token jsc_next_token(jsc_tokenizer_state *state)
   return token;
 }
 
-static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
+static void jsc_vec_scan_identifier(jsc_tokenizer_state* state)
 {
   jsc_token token;
   memset(&token, 0, sizeof(jsc_token));
@@ -2506,29 +2688,27 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
     const __m512i a_upper = _mm512_set1_epi8('A');
     const __m512i z_upper = _mm512_set1_epi8('Z');
 
-    while (remaining >= (1 << 6) && identifier_length + (1 << 6) < JSC_MAX_IDENTIFIER_LENGTH)
+    while (remaining >= (1 << 6) &&
+           identifier_length + (1 << 6) < JSC_MAX_IDENTIFIER_LENGTH)
     {
-      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                   _MM_HINT_T0);
 
-      __m512i chunk = _mm512_loadu_si512((const __m512i *)(state->source + state->position));
+      __m512i chunk =
+          _mm512_loadu_si512((const __m512i*)(state->source + state->position));
 
       __mmask64 is_underscore = _mm512_cmpeq_epi8_mask(chunk, underscore);
       __mmask64 is_dollar = _mm512_cmpeq_epi8_mask(chunk, dollar);
-      __mmask64 is_digit = _mm512_kand(
-          _mm512_cmpge_epi8_mask(chunk, zero),
-          _mm512_cmple_epi8_mask(chunk, nine));
-      __mmask64 is_lower = _mm512_kand(
-          _mm512_cmpge_epi8_mask(chunk, a_lower),
-          _mm512_cmple_epi8_mask(chunk, z_lower));
-      __mmask64 is_upper = _mm512_kand(
-          _mm512_cmpge_epi8_mask(chunk, a_upper),
-          _mm512_cmple_epi8_mask(chunk, z_upper));
+      __mmask64 is_digit = _mm512_kand(_mm512_cmpge_epi8_mask(chunk, zero),
+                                       _mm512_cmple_epi8_mask(chunk, nine));
+      __mmask64 is_lower = _mm512_kand(_mm512_cmpge_epi8_mask(chunk, a_lower),
+                                       _mm512_cmple_epi8_mask(chunk, z_lower));
+      __mmask64 is_upper = _mm512_kand(_mm512_cmpge_epi8_mask(chunk, a_upper),
+                                       _mm512_cmple_epi8_mask(chunk, z_upper));
 
-      __mmask64 is_id_part = _mm512_kor(
-          _mm512_kor(
-              _mm512_kor(is_underscore, is_dollar),
-              is_digit),
-          _mm512_kor(is_lower, is_upper));
+      __mmask64 is_id_part =
+          _mm512_kor(_mm512_kor(_mm512_kor(is_underscore, is_dollar), is_digit),
+                     _mm512_kor(is_lower, is_upper));
 
       if (is_id_part == 0)
       {
@@ -2537,7 +2717,8 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
 
       if (is_id_part == UINT64_MAX)
       {
-        _mm512_storeu_si512((__m512i *)(state->identifier_buffer + identifier_length), chunk);
+        _mm512_storeu_si512(
+            (__m512i*)(state->identifier_buffer + identifier_length), chunk);
         identifier_length += (1 << 6);
         state->position += (1 << 6);
         state->column += (1 << 6);
@@ -2551,7 +2732,8 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
       {
         for (int i = 0; i < trailing_zeros; i++)
         {
-          state->identifier_buffer[identifier_length++] = state->source[state->position++];
+          state->identifier_buffer[identifier_length++] =
+              state->source[state->position++];
           state->column++;
         }
 
@@ -2573,11 +2755,14 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
     const __m256i a_upper = _mm256_set1_epi8('A');
     const __m256i z_upper = _mm256_set1_epi8('Z');
 
-    while (remaining >= (1 << 5) && identifier_length + (1 << 5) < JSC_MAX_IDENTIFIER_LENGTH)
+    while (remaining >= (1 << 5) &&
+           identifier_length + (1 << 5) < JSC_MAX_IDENTIFIER_LENGTH)
     {
-      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE, _MM_HINT_T0);
+      _mm_prefetch(state->source + state->position + JSC_PREFETCH_DISTANCE,
+                   _MM_HINT_T0);
 
-      __m256i chunk = _mm256_loadu_si256((const __m256i *)(state->source + state->position));
+      __m256i chunk =
+          _mm256_loadu_si256((const __m256i*)(state->source + state->position));
 
       __m256i is_underscore = _mm256_cmpeq_epi8(chunk, underscore);
       __m256i is_dollar = _mm256_cmpeq_epi8(chunk, dollar);
@@ -2585,16 +2770,18 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
           _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(zero, _mm256_set1_epi8(1))),
           _mm256_cmpgt_epi8(_mm256_add_epi8(nine, _mm256_set1_epi8(1)), chunk));
       __m256i is_lower = _mm256_and_si256(
-          _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(a_lower, _mm256_set1_epi8(1))),
-          _mm256_cmpgt_epi8(_mm256_add_epi8(z_lower, _mm256_set1_epi8(1)), chunk));
+          _mm256_cmpgt_epi8(chunk,
+                            _mm256_sub_epi8(a_lower, _mm256_set1_epi8(1))),
+          _mm256_cmpgt_epi8(_mm256_add_epi8(z_lower, _mm256_set1_epi8(1)),
+                            chunk));
       __m256i is_upper = _mm256_and_si256(
-          _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(a_upper, _mm256_set1_epi8(1))),
-          _mm256_cmpgt_epi8(_mm256_add_epi8(z_upper, _mm256_set1_epi8(1)), chunk));
+          _mm256_cmpgt_epi8(chunk,
+                            _mm256_sub_epi8(a_upper, _mm256_set1_epi8(1))),
+          _mm256_cmpgt_epi8(_mm256_add_epi8(z_upper, _mm256_set1_epi8(1)),
+                            chunk));
 
       __m256i is_id_part = _mm256_or_si256(
-          _mm256_or_si256(
-              _mm256_or_si256(is_underscore, is_dollar),
-              is_digit),
+          _mm256_or_si256(_mm256_or_si256(is_underscore, is_dollar), is_digit),
           _mm256_or_si256(is_lower, is_upper));
 
       uint32_t mask = _mm256_movemask_epi8(is_id_part);
@@ -2606,7 +2793,8 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
 
       if (mask == 0xFFFFFFFF)
       {
-        _mm256_storeu_si256((__m256i *)(state->identifier_buffer + identifier_length), chunk);
+        _mm256_storeu_si256(
+            (__m256i*)(state->identifier_buffer + identifier_length), chunk);
         identifier_length += (1 << 5);
         state->position += (1 << 5);
         state->column += (1 << 5);
@@ -2620,7 +2808,8 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
       {
         for (int i = 0; i < trailing_zeros; i++)
         {
-          state->identifier_buffer[identifier_length++] = state->source[state->position++];
+          state->identifier_buffer[identifier_length++] =
+              state->source[state->position++];
           state->column++;
         }
 
@@ -2632,7 +2821,8 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
   }
 #endif
 
-  while (state->position < state->source_length && identifier_length < JSC_MAX_IDENTIFIER_LENGTH)
+  while (state->position < state->source_length &&
+         identifier_length < JSC_MAX_IDENTIFIER_LENGTH)
   {
     char c = jsc_peek(state);
 
@@ -2657,7 +2847,7 @@ static void jsc_vec_scan_identifier(jsc_tokenizer_state *state)
   state->current = token;
 }
 
-static void jsc_scan_string(jsc_tokenizer_state *state, char quote)
+static void jsc_scan_string(jsc_tokenizer_state* state, char quote)
 {
   jsc_token token;
   memset(&token, 0, sizeof(jsc_token));
@@ -2756,14 +2946,19 @@ static void jsc_scan_string(jsc_tokenizer_state *state, char quote)
         }
         else if (hex_value < 0x800)
         {
-          state->string_buffer[string_length++] = (char)(0xC0 | (hex_value >> 6));
-          state->string_buffer[string_length++] = (char)(0x80 | (hex_value & 0x3F));
+          state->string_buffer[string_length++] =
+              (char)(0xC0 | (hex_value >> 6));
+          state->string_buffer[string_length++] =
+              (char)(0x80 | (hex_value & 0x3F));
         }
         else
         {
-          state->string_buffer[string_length++] = (char)(0xE0 | (hex_value >> 12));
-          state->string_buffer[string_length++] = (char)(0x80 | ((hex_value >> 6) & 0x3F));
-          state->string_buffer[string_length++] = (char)(0x80 | (hex_value & 0x3F));
+          state->string_buffer[string_length++] =
+              (char)(0xE0 | (hex_value >> 12));
+          state->string_buffer[string_length++] =
+              (char)(0x80 | ((hex_value >> 6) & 0x3F));
+          state->string_buffer[string_length++] =
+              (char)(0x80 | (hex_value & 0x3F));
         }
         break;
       }
@@ -2788,7 +2983,8 @@ static void jsc_scan_string(jsc_tokenizer_state *state, char quote)
           return;
         }
 
-        uint8_t hex_value = (jsc_hex_value[(unsigned char)hex1] << 4) | jsc_hex_value[(unsigned char)hex2];
+        uint8_t hex_value = (jsc_hex_value[(unsigned char)hex1] << 4) |
+                            jsc_hex_value[(unsigned char)hex2];
         state->string_buffer[string_length++] = (char)hex_value;
         break;
       }
@@ -2820,7 +3016,7 @@ static void jsc_scan_string(jsc_tokenizer_state *state, char quote)
   state->current = token;
 }
 
-void jsc_tokenizer_free(jsc_tokenizer_state *state)
+void jsc_tokenizer_free(jsc_tokenizer_state* state)
 {
   if (state)
   {
@@ -2843,17 +3039,17 @@ void jsc_tokenizer_free(jsc_tokenizer_state *state)
   }
 }
 
-bool jsc_tokenizer_has_error(jsc_tokenizer_state *state)
+bool jsc_tokenizer_has_error(jsc_tokenizer_state* state)
 {
   return state->error_message != NULL;
 }
 
-const char *jsc_tokenizer_get_error(jsc_tokenizer_state *state)
+const char* jsc_tokenizer_get_error(jsc_tokenizer_state* state)
 {
   return state->error_message;
 }
 
-const char *jsc_token_type_to_string(jsc_token_type type)
+const char* jsc_token_type_to_string(jsc_token_type type)
 {
   if (type >= 0 && type < sizeof(jsc_token_names) / sizeof(jsc_token_names[0]))
   {
