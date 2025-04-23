@@ -4,6 +4,17 @@
 
 #include "bytecode.h"
 #include "tokenizer.h"
+#include "engine.h"
+
+void test_engine_basic()
+{
+  printf("testing execution...\n");
+  const char* source = "let n = 7"
+                       "n = 'hello world';";
+  jsc_value out = jsc_engine_eval(source);
+  printf("output: %s\n", jsc_value_to_string(out));
+  printf("done\n");
+}
 
 void test_bytecode_basic()
 {
@@ -610,6 +621,7 @@ int main()
 
   test_bytecode_basic();
   // test_bytecode();
+  test_engine_basic();
 
   return 0;
 }
