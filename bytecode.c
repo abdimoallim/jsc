@@ -708,23 +708,40 @@ jsc_attribute* jsc_bytecode_add_method_attribute(jsc_bytecode_state* state,
   uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
 
   if (name_index == 0)
-  {
     return NULL;
+
+  if (method->attributes == NULL)
+  {
+    method->attributes = malloc(sizeof(jsc_attribute));
+
+    if (!method->attributes)
+      return NULL;
+
+    method->attribute_count = 1;
+  }
+  else
+  {
+    jsc_attribute* new_attrs =
+        realloc(method->attributes,
+                (method->attribute_count + 1) * sizeof(jsc_attribute));
+
+    if (!new_attrs)
+      return NULL;
+
+    method->attributes = new_attrs;
+    method->attribute_count++;
   }
 
-  method->attributes = (jsc_attribute*)realloc(method->attributes,
-                                               (method->attribute_count + 1) *
-                                                   sizeof(jsc_attribute));
+  jsc_attribute* attr = &method->attributes[method->attribute_count - 1];
 
-  jsc_attribute* attribute = &method->attributes[method->attribute_count];
+  attr->name_index = name_index;
+  attr->length = length;
+  attr->info = malloc(length);
 
-  attribute->name_index = name_index;
-  attribute->length = length;
-  attribute->info = (uint8_t*)malloc(length);
+  if (!attr->info)
+    return NULL;
 
-  method->attribute_count++;
-
-  return attribute;
+  return attr;
 }
 
 jsc_attribute* jsc_bytecode_add_field_attribute(jsc_bytecode_state* state,
@@ -757,11 +774,10 @@ void jsc_bytecode_add_code_attribute(jsc_bytecode_state* state,
                                      uint16_t max_locals, uint8_t* code,
                                      uint32_t code_length)
 {
-  uint32_t attr_length = 12 + code_length;
+  uint32_t attr_length = 2 + 2 + 4 + code_length + 2 + 2;
 
   jsc_attribute* code_attr =
       jsc_bytecode_add_method_attribute(state, method, "Code", attr_length);
-
   if (!code_attr)
   {
     return;
@@ -781,8 +797,11 @@ void jsc_bytecode_add_code_attribute(jsc_bytecode_state* state,
   memcpy(p, &code_length_be, 4);
   p += 4;
 
-  memcpy(p, code, code_length);
-  p += code_length;
+  if (code_length > 0 && code != NULL)
+  {
+    memcpy(p, code, code_length);
+    p += code_length;
+  }
 
   uint16_t exception_table_length = 0;
   uint16_t exception_table_length_be = htobe16(exception_table_length);
@@ -854,6 +873,134 @@ void jsc_bytecode_add_exception_table_entry(jsc_bytecode_state* state,
   free(code_attribute->info);
   code_attribute->info = new_info;
   code_attribute->length = new_info_length;
+}
+
+/**
+ * stack map frame procedure:
+ *  find the position of the attributes count in the Code attribute,
+ *  skip max_stack, max_locals, exception table, read attributes count,
+ *  check if stack map table already exists and update accordingly.
+ *  Read number of entries for frame, create a new attribute with increased
+ *  size, +1 for a single SAME frame, write the entry count, copy existing
+ *  entries, add a new frame, update attribute length and replace attribute info.
+ */
+
+void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
+                                     jsc_attribute* code_attr,
+                                     uint16_t byte_offset, uint8_t frame_type)
+{
+  uint8_t* p = code_attr->info + 2 + 2;
+  uint32_t code_length;
+  memcpy(&code_length, p, 4);
+  code_length = be32toh(code_length);
+  p += 4 + code_length;
+
+  uint16_t exception_table_length;
+  memcpy(&exception_table_length, p, 2);
+  exception_table_length = be16toh(exception_table_length);
+  p += 2 + exception_table_length * 8;
+
+  uint16_t attributes_count;
+  memcpy(&attributes_count, p, 2);
+  attributes_count = be16toh(attributes_count);
+
+  uint16_t stack_map_index = 0;
+  uint8_t* attr_ptr = p + 2;
+
+  for (uint16_t i = 0; i < attributes_count; i++)
+  {
+    uint16_t attr_name_index;
+    memcpy(&attr_name_index, attr_ptr, 2);
+    attr_name_index = be16toh(attr_name_index);
+
+    if (attr_name_index > 0 &&
+        state->constant_pool[attr_name_index].tag == JSC_CP_UTF8 &&
+        state->constant_pool[attr_name_index].utf8_info.length == 13 &&
+        memcmp(state->constant_pool[attr_name_index].utf8_info.bytes,
+               "StackMapTable", 13) == 0)
+    {
+      attr_ptr += 2;
+      uint32_t attr_length;
+      memcpy(&attr_length, attr_ptr, 4);
+      attr_length = be32toh(attr_length);
+
+      attr_ptr += 4;
+      uint16_t entry_count;
+      memcpy(&entry_count, attr_ptr, 2);
+      entry_count = be16toh(entry_count);
+      entry_count++;
+
+      uint32_t new_attr_length = attr_length + 1;
+      uint8_t* new_attr_info = malloc(new_attr_length);
+
+      uint16_t new_entry_count_be = htobe16(entry_count);
+      memcpy(new_attr_info, &new_entry_count_be, 2);
+
+      memcpy(new_attr_info + 2, attr_ptr + 2, attr_length - 2);
+
+      new_attr_info[attr_length] = frame_type;
+
+      attr_ptr -= 4;
+      uint32_t new_attr_length_be = htobe32(new_attr_length);
+      memcpy(attr_ptr, &new_attr_length_be, 4);
+
+      attr_ptr += 4;
+      memcpy(attr_ptr, new_attr_info, new_attr_length);
+
+      free(new_attr_info);
+      return;
+    }
+
+    attr_ptr += 2;
+    uint32_t attr_length;
+    memcpy(&attr_length, attr_ptr, 4);
+    attr_length = be32toh(attr_length);
+    attr_ptr += 4 + attr_length;
+  }
+
+  uint16_t stackmap_name_index = /* if none is found, define one */
+      jsc_bytecode_add_utf8_constant(state, "StackMapTable");
+
+  uint32_t
+      stackmap_attr_length = /* SAME frame (type 0) for no change in locals/stack */
+      2 + 1;                 /* 2 bytes for num_entries + 1 byte for frame */
+  uint8_t* stackmap_info = malloc(stackmap_attr_length);
+
+  uint16_t num_entries = htobe16(1);
+  memcpy(stackmap_info, &num_entries, 2);
+
+  stackmap_info[2] = frame_type;
+
+  uint32_t extra_length = 2 + 4 + stackmap_attr_length;
+  uint32_t new_code_attr_length = code_attr->length + extra_length;
+  uint8_t* new_code_attr_info = malloc(new_code_attr_length);
+
+  uint32_t copy_length = p - code_attr->info;
+  memcpy(new_code_attr_info, code_attr->info, copy_length);
+
+  attributes_count++;
+  uint16_t attributes_count_be = htobe16(attributes_count);
+  memcpy(new_code_attr_info + copy_length, &attributes_count_be, 2);
+
+  memcpy(new_code_attr_info + copy_length + 2, p + 2,
+         code_attr->length - copy_length - 2);
+
+  uint8_t* attr_pos = new_code_attr_info + code_attr->length;
+  uint16_t name_index_be = htobe16(stackmap_name_index);
+  memcpy(attr_pos, &name_index_be, 2);
+  attr_pos += 2;
+
+  uint32_t length_be = htobe32(stackmap_attr_length);
+  memcpy(attr_pos, &length_be, 4);
+  attr_pos += 4;
+
+  memcpy(attr_pos, stackmap_info, stackmap_attr_length);
+
+  free(code_attr->info);
+  code_attr->info = new_code_attr_info;
+  code_attr->length = new_code_attr_length;
+
+  free(stackmap_info);
 }
 
 uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
@@ -1181,127 +1328,235 @@ jsc_method* jsc_bytecode_create_method(jsc_bytecode_state* state,
       jsc_bytecode_add_method(state, name, descriptor, access_flags);
 
   if (!method)
+    return NULL;
+
+  uint32_t code_length = 0;
+
+  uint32_t attr_length = 2 + 2 + 4 + code_length + 2 + 2;
+
+  uint16_t code_index = jsc_bytecode_add_utf8_constant(state, "Code");
+  method->attributes = malloc(sizeof(jsc_attribute));
+
+  if (!method->attributes)
+    return NULL;
+
+  method->attribute_count = 1;
+  method->attributes[0].name_index = code_index;
+  method->attributes[0].length = attr_length;
+  method->attributes[0].info = malloc(attr_length);
+
+  if (!method->attributes[0].info)
   {
+    free(method->attributes);
+    method->attributes = NULL;
     return NULL;
   }
 
-  uint8_t* code = (uint8_t*)malloc(JSC_MAX_CODE_SIZE);
+  uint8_t* p = method->attributes[0].info;
 
-  if (!code)
-  {
-    return NULL;
-  }
+  uint16_t max_stack_be = htobe16(max_stack);
+  max_stack = max_stack < 2 ? 2 : max_stack;
+  memcpy(p, &max_stack_be, 2);
+  p += 2;
 
-  jsc_bytecode_add_code_attribute(state, method, max_stack, max_locals, code,
-                                  0);
-  free(code);
+  uint16_t max_locals_be = htobe16(max_locals);
+  memcpy(p, &max_locals_be, 2);
+  p += 2;
+
+  uint32_t code_length_be = htobe32(code_length);
+  memcpy(p, &code_length_be, 4);
+  p += 4;
+
+  uint16_t exception_table_length = 0;
+  uint16_t exception_table_length_be = htobe16(exception_table_length);
+  memcpy(p, &exception_table_length_be, 2);
+  p += 2;
+
+  uint16_t attributes_count = 0;
+  uint16_t attributes_count_be = htobe16(attributes_count);
+  memcpy(p, &attributes_count_be, 2);
 
   return method;
 }
 
+/**
+ * @brief emit a JVM opcode to a jsc_method
+ * 
+ * @details Allocate new buffer for the code attribute, copy header (max_stack, max_locals),
+ *          update code length, copy existing code, add new opcode, copy exception
+ *          table & attributes from after the code, replace attribute info.
+ */
 void jsc_bytecode_emit(jsc_bytecode_state* state, jsc_method* method,
                        uint8_t opcode)
 {
+  if (!method || method->attribute_count == 0)
+    return;
+
+  jsc_attribute* code_attr = NULL;
+
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
-    jsc_attribute* attr = &method->attributes[i];
-    uint16_t name_index = attr->name_index;
-
-    const jsc_constant_pool_entry* name_entry =
-        &state->constant_pool[name_index];
-
-    if (name_entry->tag == JSC_CP_UTF8 && name_entry->utf8_info.length == 4 &&
-        memcmp(name_entry->utf8_info.bytes, "Code", 4) == 0)
+    const jsc_constant_pool_entry* entry =
+        &state->constant_pool[method->attributes[i].name_index];
+    if (entry->tag == JSC_CP_UTF8 && entry->utf8_info.length == 4 &&
+        memcmp(entry->utf8_info.bytes, "Code", 4) == 0)
     {
-
-      uint8_t* p = attr->info + 2 + 2;
-      uint32_t code_length;
-      memcpy(&code_length, p, 4);
-      code_length = be32toh(code_length);
-
-      p += 4;
-
-      p[code_length] = opcode;
-
-      code_length++;
-
-      uint32_t code_length_be = htobe32(code_length);
-      memcpy(attr->info + 4, &code_length_be, 4);
-
+      code_attr = &method->attributes[i];
       break;
     }
   }
+
+  if (!code_attr)
+    return;
+
+  uint8_t* info = code_attr->info;
+  uint32_t code_length;
+  memcpy(&code_length, info + 4, 4); /* skip max_stack(2) + max_locals(2) */
+  code_length = be32toh(code_length);
+
+  uint32_t new_code_length = code_length + 1;
+  uint32_t new_attribute_length = code_attr->length + 1;
+
+  uint8_t* new_info = malloc(new_attribute_length);
+  if (!new_info)
+    return;
+
+  memcpy(new_info, info, 4);
+
+  uint32_t new_code_length_be = htobe32(new_code_length);
+  memcpy(new_info + 4, &new_code_length_be, 4);
+
+  memcpy(new_info + 8, info + 8, code_length);
+
+  new_info[8 + code_length] = opcode;
+
+  size_t tail_size = code_attr->length - (8 + code_length);
+  if (tail_size > 0)
+  {
+    memcpy(new_info + 8 + new_code_length, info + 8 + code_length, tail_size);
+  }
+
+  free(code_attr->info);
+  code_attr->info = new_info;
+  code_attr->length = new_attribute_length;
 }
 
 void jsc_bytecode_emit_u8(jsc_bytecode_state* state, jsc_method* method,
                           uint8_t opcode, uint8_t operand)
 {
+  if (!method || method->attribute_count == 0)
+  {
+    return;
+  }
+
+  jsc_attribute* code_attr = NULL;
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
-    jsc_attribute* attr = &method->attributes[i];
-    uint16_t name_index = attr->name_index;
-
-    const jsc_constant_pool_entry* name_entry =
-        &state->constant_pool[name_index];
-
-    if (name_entry->tag == JSC_CP_UTF8 && name_entry->utf8_info.length == 4 &&
-        memcmp(name_entry->utf8_info.bytes, "Code", 4) == 0)
+    uint16_t name_index = method->attributes[i].name_index;
+    if (name_index > 0 && state->constant_pool[name_index].tag == JSC_CP_UTF8 &&
+        state->constant_pool[name_index].utf8_info.length == 4 &&
+        memcmp(state->constant_pool[name_index].utf8_info.bytes, "Code", 4) ==
+            0)
     {
-
-      uint8_t* p = attr->info + 2 + 2;
-      uint32_t code_length;
-      memcpy(&code_length, p, 4);
-      code_length = be32toh(code_length);
-
-      p += 4;
-
-      p[code_length] = opcode;
-      p[code_length + 1] = operand;
-
-      code_length += 2;
-
-      uint32_t code_length_be = htobe32(code_length);
-      memcpy(attr->info + 4, &code_length_be, 4);
-
+      code_attr = &method->attributes[i];
       break;
     }
   }
+
+  if (!code_attr)
+  {
+    return;
+  }
+
+  uint8_t* p = code_attr->info + 2 + 2;
+  uint32_t code_length;
+  memcpy(&code_length, p, 4);
+  code_length = be32toh(code_length);
+  p += 4;
+
+  uint32_t new_length = code_length + 2;
+  uint32_t new_attr_length = code_attr->length + 2;
+
+  uint8_t* new_info = malloc(new_attr_length);
+  if (!new_info)
+    return;
+
+  memcpy(new_info, code_attr->info, 4);
+
+  uint32_t new_code_length_be = htobe32(new_length);
+  memcpy(new_info + 4, &new_code_length_be, 4);
+
+  memcpy(new_info + 8, p, code_length);
+
+  new_info[8 + code_length] = opcode;
+  new_info[8 + code_length + 1] = operand;
+
+  memcpy(new_info + 8 + new_length, p + code_length,
+         code_attr->length - (8 + code_length));
+
+  free(code_attr->info);
+  code_attr->info = new_info;
+  code_attr->length = new_attr_length;
 }
 
 void jsc_bytecode_emit_u16(jsc_bytecode_state* state, jsc_method* method,
                            uint8_t opcode, uint16_t operand)
 {
+  if (!method || method->attribute_count == 0)
+  {
+    return;
+  }
+
+  jsc_attribute* code_attr = NULL;
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
-    jsc_attribute* attr = &method->attributes[i];
-    uint16_t name_index = attr->name_index;
-
-    const jsc_constant_pool_entry* name_entry =
-        &state->constant_pool[name_index];
-
-    if (name_entry->tag == JSC_CP_UTF8 && name_entry->utf8_info.length == 4 &&
-        memcmp(name_entry->utf8_info.bytes, "Code", 4) == 0)
+    uint16_t name_index = method->attributes[i].name_index;
+    if (name_index > 0 && state->constant_pool[name_index].tag == JSC_CP_UTF8 &&
+        state->constant_pool[name_index].utf8_info.length == 4 &&
+        memcmp(state->constant_pool[name_index].utf8_info.bytes, "Code", 4) ==
+            0)
     {
-
-      uint8_t* p = attr->info + 2 + 2;
-      uint32_t code_length;
-      memcpy(&code_length, p, 4);
-      code_length = be32toh(code_length);
-
-      p += 4;
-
-      p[code_length] = opcode;
-      uint16_t operand_be = htobe16(operand);
-      memcpy(&p[code_length + 1], &operand_be, 2);
-
-      code_length += 3;
-
-      uint32_t code_length_be = htobe32(code_length);
-      memcpy(attr->info + 4, &code_length_be, 4);
-
+      code_attr = &method->attributes[i];
       break;
     }
   }
+
+  if (!code_attr)
+  {
+    return;
+  }
+
+  uint8_t* p = code_attr->info + 2 + 2;
+  uint32_t code_length;
+  memcpy(&code_length, p, 4);
+  code_length = be32toh(code_length);
+  p += 4;
+
+  uint32_t new_length = code_length + 3;
+  uint32_t new_attr_length = code_attr->length + 3;
+
+  uint8_t* new_info = malloc(new_attr_length);
+  if (!new_info)
+    return;
+
+  memcpy(new_info, code_attr->info, 4);
+
+  uint32_t new_code_length_be = htobe32(new_length);
+  memcpy(new_info + 4, &new_code_length_be, 4);
+
+  memcpy(new_info + 8, p, code_length);
+
+  new_info[8 + code_length] = opcode;
+
+  uint16_t operand_be = htobe16(operand);
+  memcpy(new_info + 8 + code_length + 1, &operand_be, 2);
+
+  memcpy(new_info + 8 + new_length, p + code_length,
+         code_attr->length - (8 + code_length));
+
+  free(code_attr->info);
+  code_attr->info = new_info;
+  code_attr->length = new_attr_length;
 }
 
 void jsc_bytecode_emit_jump(jsc_bytecode_state* state, jsc_method* method,
@@ -1912,4 +2167,112 @@ void jsc_bytecode_emit_load_constant_string(jsc_bytecode_state* state,
 {
   uint16_t const_index = jsc_bytecode_add_string_constant(state, value);
   jsc_bytecode_emit_const_load(state, method, const_index);
+}
+
+void jsc_bytecode_emit_load_constant_int_boxed(jsc_bytecode_state* state,
+                                               jsc_method* method,
+                                               int32_t value)
+{
+  jsc_bytecode_emit_new(state, method, "java/lang/Integer");
+  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+
+  if (value >= -1 && value <= 5)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_ICONST_0 + value);
+  }
+  else if (value >= -128 && value <= 127)
+  {
+    jsc_bytecode_emit_u8(state, method, JSC_JVM_BIPUSH, (uint8_t)value);
+  }
+  else if (value >= -32768 && value <= 32767)
+  {
+    jsc_bytecode_emit_u16(state, method, JSC_JVM_SIPUSH, (uint16_t)value);
+  }
+  else
+  {
+    uint16_t const_index = jsc_bytecode_add_integer_constant(state, value);
+    jsc_bytecode_emit_const_load(state, method, const_index);
+  }
+
+  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Integer", "<init>",
+                                   "(I)V");
+}
+
+void jsc_bytecode_emit_load_constant_long_boxed(jsc_bytecode_state* state,
+                                                jsc_method* method,
+                                                int64_t value)
+{
+  jsc_bytecode_emit_new(state, method, "java/lang/Long");
+  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+
+  if (value == 0)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_LCONST_0);
+  }
+  else if (value == 1)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_LCONST_1);
+  }
+  else
+  {
+    uint16_t const_index = jsc_bytecode_add_long_constant(state, value);
+    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC2_W, const_index);
+  }
+
+  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Long", "<init>",
+                                   "(J)V");
+}
+
+void jsc_bytecode_emit_load_constant_float_boxed(jsc_bytecode_state* state,
+                                                 jsc_method* method,
+                                                 float value)
+{
+  jsc_bytecode_emit_new(state, method, "java/lang/Float");
+  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+
+  if (value == 0.0f)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_0);
+  }
+  else if (value == 1.0f)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_1);
+  }
+  else if (value == 2.0f)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_2);
+  }
+  else
+  {
+    uint16_t const_index = jsc_bytecode_add_float_constant(state, value);
+    jsc_bytecode_emit_const_load(state, method, const_index);
+  }
+
+  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Float", "<init>",
+                                   "(F)V");
+}
+
+void jsc_bytecode_emit_load_constant_double_boxed(jsc_bytecode_state* state,
+                                                  jsc_method* method,
+                                                  double value)
+{
+  jsc_bytecode_emit_new(state, method, "java/lang/Double");
+  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+
+  if (value == 0.0)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_DCONST_0);
+  }
+  else if (value == 1.0)
+  {
+    jsc_bytecode_emit(state, method, JSC_JVM_DCONST_1);
+  }
+  else
+  {
+    uint16_t const_index = jsc_bytecode_add_double_constant(state, value);
+    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC2_W, const_index);
+  }
+
+  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Double", "<init>",
+                                   "(D)V");
 }

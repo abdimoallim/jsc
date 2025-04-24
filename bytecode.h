@@ -479,6 +479,9 @@ void jsc_bytecode_add_exception_table_entry(jsc_bytecode_state* state,
                                             uint16_t start_pc, uint16_t end_pc,
                                             uint16_t handler_pc,
                                             uint16_t catch_type);
+void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
+                                     jsc_attribute* code_attr,
+                                     uint16_t byte_offset, uint8_t frame_type);
 
 uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer);
 bool jsc_bytecode_write_to_file(jsc_bytecode_state* state,
@@ -562,5 +565,18 @@ void jsc_bytecode_emit_load_constant_double(jsc_bytecode_state* state,
 void jsc_bytecode_emit_load_constant_string(jsc_bytecode_state* state,
                                             jsc_method* method,
                                             const char* value);
+
+void jsc_bytecode_emit_load_constant_int_boxed(jsc_bytecode_state* state,
+                                               jsc_method* method,
+                                               int32_t value);
+void jsc_bytecode_emit_load_constant_long_boxed(jsc_bytecode_state* state,
+                                                jsc_method* method,
+                                                int64_t value);
+void jsc_bytecode_emit_load_constant_float_boxed(jsc_bytecode_state* state,
+                                                 jsc_method* method,
+                                                 float value);
+void jsc_bytecode_emit_load_constant_double_boxed(jsc_bytecode_state* state,
+                                                  jsc_method* method,
+                                                  double value);
 
 #endif

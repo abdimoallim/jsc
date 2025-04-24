@@ -9,8 +9,8 @@
 void test_engine_basic()
 {
   printf("testing execution...\n");
-  const char* source = "let n = 7"
-                       "n = 'hello world';";
+  const char* source = "let n = 7 * 3; 4 * 4;";
+  //  "n = 'hello world';";
   jsc_value out = jsc_engine_eval(source);
   printf("output: %s\n", jsc_value_to_string(out));
   printf("done\n");
@@ -561,7 +561,7 @@ void tokenize_and_print(const char* source, const char* description)
   printf("\n");
 }
 
-int main()
+void test_tokenize()
 {
   jsc_vector_level level = jsc_get_vector_level();
   printf("detected simd level: %d\n\n", level);
@@ -618,8 +618,13 @@ int main()
                                      "  return a; "
                                      "}";
   tokenize_and_print(js_func_control_flow, "function with control flow");
+}
 
-  test_bytecode_basic();
+int main()
+{
+
+  // test_tokenize();
+  // test_bytecode_basic();
   // test_bytecode();
   test_engine_basic();
 

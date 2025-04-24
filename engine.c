@@ -557,6 +557,7 @@ jsc_value jsc_engine_call_method(jsc_engine_state* state,
 jsc_value jsc_engine_eval(const char* source)
 {
   jsc_engine_state* state = jsc_engine_init("JSCScript");
+
   if (!state)
   {
     jsc_value undefined = jsc_value_create_undefined();
@@ -564,6 +565,13 @@ jsc_value jsc_engine_eval(const char* source)
   }
 
   if (!jsc_engine_compile(state, source))
+  {
+    // jsc_value undefined = jsc_value_create_undefined();
+    // jsc_engine_free(state);
+    // return undefined;
+  }
+
+  if (!jsc_bytecode_write_to_file(state->bytecode, "JSCScript.class"))
   {
     jsc_value undefined = jsc_value_create_undefined();
     jsc_engine_free(state);
@@ -698,7 +706,123 @@ void jsc_engine_emit_byte(jsc_engine_state* state, uint8_t byte)
 {
   jsc_bytecode_emit(state->bytecode, state->current_method, byte);
 
-  state->stack_size++;
+  switch (byte)
+  {
+  case JSC_JVM_POP:
+    state->stack_size -= 1;
+    break;
+  case JSC_JVM_POP2:
+    state->stack_size -= 2;
+    break;
+  case JSC_JVM_IADD:
+  case JSC_JVM_ISUB:
+  case JSC_JVM_IMUL:
+  case JSC_JVM_IDIV:
+  case JSC_JVM_IREM:
+  case JSC_JVM_ISHL:
+  case JSC_JVM_ISHR:
+  case JSC_JVM_IUSHR:
+  case JSC_JVM_IAND:
+  case JSC_JVM_IOR:
+  case JSC_JVM_IXOR:
+  case JSC_JVM_FADD:
+  case JSC_JVM_FSUB:
+  case JSC_JVM_FMUL:
+  case JSC_JVM_FDIV:
+  case JSC_JVM_FREM:
+    state->stack_size -= 1;
+    break;
+  case JSC_JVM_LADD:
+  case JSC_JVM_LSUB:
+  case JSC_JVM_LMUL:
+  case JSC_JVM_LDIV:
+  case JSC_JVM_LREM:
+  case JSC_JVM_LSHL:
+  case JSC_JVM_LSHR:
+  case JSC_JVM_LUSHR:
+  case JSC_JVM_LAND:
+  case JSC_JVM_LOR:
+  case JSC_JVM_LXOR:
+  case JSC_JVM_DADD:
+  case JSC_JVM_DSUB:
+  case JSC_JVM_DMUL:
+  case JSC_JVM_DDIV:
+  case JSC_JVM_DREM:
+    state->stack_size -= 2;
+    break;
+  case JSC_JVM_PUTSTATIC:
+    state->stack_size -= 1;
+    break;
+  case JSC_JVM_PUTFIELD:
+    state->stack_size -= 2;
+    break;
+  case JSC_JVM_IRETURN:
+  case JSC_JVM_FRETURN:
+  case JSC_JVM_ARETURN:
+    state->stack_size -= 1;
+    break;
+  case JSC_JVM_LRETURN:
+  case JSC_JVM_DRETURN:
+    state->stack_size -= 2;
+    break;
+  case JSC_JVM_NEW:
+    state->stack_size += 1;
+    break;
+  case JSC_JVM_DUP:
+    state->stack_size += 1;
+    break;
+  case JSC_JVM_INVOKESPECIAL:
+    state->stack_size -= 2;
+    break;
+  case JSC_JVM_INVOKEVIRTUAL:
+  case JSC_JVM_INVOKESTATIC:
+    state->stack_size -= 1;
+    break;
+  case JSC_JVM_GETSTATIC:
+    state->stack_size += 1;
+    break;
+  case JSC_JVM_ACONST_NULL:
+  case JSC_JVM_ICONST_M1:
+  case JSC_JVM_ICONST_0:
+  case JSC_JVM_ICONST_1:
+  case JSC_JVM_ICONST_2:
+  case JSC_JVM_ICONST_3:
+  case JSC_JVM_ICONST_4:
+  case JSC_JVM_ICONST_5:
+  case JSC_JVM_FCONST_0:
+  case JSC_JVM_FCONST_1:
+  case JSC_JVM_FCONST_2:
+  case JSC_JVM_BIPUSH:
+  case JSC_JVM_SIPUSH:
+  case JSC_JVM_LDC:
+  case JSC_JVM_LDC_W:
+    state->stack_size += 1;
+    break;
+  case JSC_JVM_LCONST_0:
+  case JSC_JVM_LCONST_1:
+  case JSC_JVM_DCONST_0:
+  case JSC_JVM_DCONST_1:
+  case JSC_JVM_LDC2_W:
+    state->stack_size += 2;
+    break;
+  case JSC_JVM_ALOAD_0:
+  case JSC_JVM_ALOAD_1:
+  case JSC_JVM_ALOAD_2:
+  case JSC_JVM_ALOAD_3:
+  case JSC_JVM_ALOAD:
+    state->stack_size += 1;
+    break;
+  case JSC_JVM_ASTORE_0:
+  case JSC_JVM_ASTORE_1:
+  case JSC_JVM_ASTORE_2:
+  case JSC_JVM_ASTORE_3:
+  case JSC_JVM_ASTORE:
+    state->stack_size -= 1;
+    break;
+  }
+
+  if (state->stack_size < 0)
+    state->stack_size = 0;
 
   if (state->stack_size > state->max_stack)
   {
@@ -717,14 +841,12 @@ uint16_t jsc_engine_emit_jump(jsc_engine_state* state, uint8_t instruction)
 {
   jsc_engine_emit_byte(state, instruction);
 
-  uint8_t* code = jsc_bytecode_get_method_code(state->current_method);
-  uint32_t code_length =
+  uint32_t code_offset =
       jsc_bytecode_get_method_code_length(state->current_method);
 
-  code[code_length++] = 0xFF;
-  code[code_length++] = 0xFF;
+  jsc_bytecode_emit_u16(state->bytecode, state->current_method, 0, 0);
 
-  return code_length - 2;
+  return code_offset;
 }
 
 void jsc_engine_patch_jump(jsc_engine_state* state, uint16_t offset)
@@ -733,17 +855,21 @@ void jsc_engine_patch_jump(jsc_engine_state* state, uint16_t offset)
   uint32_t current = jsc_bytecode_get_method_code_length(state->current_method);
 
   int16_t jump = current - offset - 2;
-  code[offset] = (jump >> 8) & 0xFF;
-  code[offset + 1] = jump & 0xFF;
+
+  uint16_t jump_be = htobe16((uint16_t)jump); /* jump offset to big-endian */
+  memcpy(&code[offset], &jump_be, 2);
 }
 
 void jsc_engine_parse_program(jsc_engine_state* state)
 {
   jsc_method* main_method = jsc_bytecode_create_method(
       state->bytecode, "main", "([Ljava/lang/String;)V",
-      JSC_ACC_PUBLIC | JSC_ACC_STATIC, 100, 100);
+      JSC_ACC_PUBLIC | JSC_ACC_STATIC, 10, 100);
 
   state->current_method = main_method;
+  state->stack_size = 0;
+  state->max_stack = 10;
+  state->local_index = 1;
 
   while (!jsc_engine_check(state, JSC_TOKEN_EOF))
   {
@@ -753,9 +879,32 @@ void jsc_engine_parse_program(jsc_engine_state* state)
     {
       return;
     }
+
+    state->stack_size = 0;
   }
 
   jsc_engine_emit_byte(state, JSC_JVM_RETURN);
+
+  for (uint16_t i = 0; i < main_method->attribute_count; i++)
+  {
+    jsc_attribute* attr = &main_method->attributes[i];
+    uint16_t name_index = attr->name_index;
+
+    if (name_index > 0 &&
+        state->bytecode->constant_pool[name_index].tag == JSC_CP_UTF8 &&
+        state->bytecode->constant_pool[name_index].utf8_info.length == 4 &&
+        memcmp(state->bytecode->constant_pool[name_index].utf8_info.bytes,
+               "Code", 4) == 0)
+    {
+      uint16_t max_stack_be = htobe16(state->max_stack);
+      memcpy(attr->info, &max_stack_be, 2);
+
+      uint16_t max_locals_be = htobe16(state->local_index);
+      memcpy(attr->info + 2, &max_locals_be, 2);
+
+      break;
+    }
+  }
 }
 
 void jsc_engine_parse_statement(jsc_engine_state* state)
@@ -1472,13 +1621,13 @@ void jsc_engine_parse_primary(jsc_engine_state* state)
 {
   if (jsc_engine_match(state, JSC_TOKEN_TRUE))
   {
-    jsc_bytecode_emit_load_constant_int(state->bytecode, state->current_method,
-                                        1);
+    jsc_bytecode_emit_load_constant_int_boxed(state->bytecode,
+                                              state->current_method, 1);
   }
   else if (jsc_engine_match(state, JSC_TOKEN_FALSE))
   {
-    jsc_bytecode_emit_load_constant_int(state->bytecode, state->current_method,
-                                        0);
+    jsc_bytecode_emit_load_constant_int_boxed(state->bytecode,
+                                              state->current_method, 0);
   }
   else if (jsc_engine_match(state, JSC_TOKEN_NULL))
   {
@@ -1486,9 +1635,9 @@ void jsc_engine_parse_primary(jsc_engine_state* state)
   }
   else if (jsc_engine_match(state, JSC_TOKEN_NUMBER))
   {
-    jsc_bytecode_emit_load_constant_double(state->bytecode,
-                                           state->current_method,
-                                           state->current_token.number_value);
+    jsc_bytecode_emit_load_constant_double_boxed(
+        state->bytecode, state->current_method,
+        state->current_token.number_value);
   }
   else if (jsc_engine_match(state, JSC_TOKEN_STRING))
   {
@@ -1607,11 +1756,18 @@ void jsc_engine_load_variable(jsc_engine_state* state, const char* name)
     jsc_bytecode_emit_field_access(state->bytecode, state->current_method,
                                    JSC_JVM_GETSTATIC, state->class_name,
                                    field_name, "Ljava/lang/Object;");
+    state->stack_size += 1;
   }
   else
   {
     jsc_bytecode_emit_local_var(state->bytecode, state->current_method,
                                 JSC_JVM_ALOAD, symbol->index);
+    state->stack_size += 1;
+  }
+
+  if (state->stack_size > state->max_stack)
+  {
+    state->max_stack = state->stack_size;
   }
 }
 
@@ -1641,11 +1797,13 @@ void jsc_engine_store_variable(jsc_engine_state* state, const char* name)
     jsc_bytecode_emit_field_access(state->bytecode, state->current_method,
                                    JSC_JVM_PUTSTATIC, state->class_name,
                                    field_name, "Ljava/lang/Object;");
+    state->stack_size -= 1;
   }
   else
   {
     jsc_bytecode_emit_local_var(state->bytecode, state->current_method,
                                 JSC_JVM_ASTORE, symbol->index);
+    state->stack_size -= 1;
   }
 }
 

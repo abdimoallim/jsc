@@ -47,8 +47,7 @@ avx512: CFLAGS += -mavx512f -mavx512vl -mavx512bw -mavx512dq
 avx512: clean all
 
 test: $(TARGET)
-	export LD_LIBRARY_PATH=/usr/lib/jvm/java-17-openjdk-amd64/lib/server:$LD_LIBRARY_PATH
-	./$(TARGET)
+	@export LD_LIBRARY_PATH=/usr/lib/jvm/java-17-openjdk-amd64/lib/server:$LD_LIBRARY_PATH && ./$(TARGET)
 
 format:
 	find . -type f \( -name "*.c" -o -name "*.h" \) -exec clang-format -i {} +
