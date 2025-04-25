@@ -1,6 +1,7 @@
 CC = clang
 CFLAGS = -Wall -Wextra -O3 # curr: ~85kB strip --strip-all: ~76kB
 # CFLAGS = -Os -ffunction-sections -fdata-sections -Wl,--gc-sections -s -flto -fuse-ld=lld # curr: ~29.1kB strip --strip-all: no change
+# CFLAGS = -Oz -flto -fuse-ld=lld -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-exceptions -fno-rtti -fvisibility=hidden -fvisibility-inlines-hidden -fomit-frame-pointer -fno-stack-protector -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--strip-all -Wl,-z,relro,-z,now # curr: ~25.1kB strip --strip-all: no change
 LDFLAGS = -lm
 
 JNI_INCLUDE = -I/usr/lib/jvm/java-17-openjdk-amd64/include -I/usr/lib/jvm/java-17-openjdk-amd64/include/linux
