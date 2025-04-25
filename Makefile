@@ -1,5 +1,6 @@
 CC = clang
-CFLAGS = -Wall -Wextra -O3
+CFLAGS = -Wall -Wextra -O3 # curr: ~85kB strip --strip-all: ~76kB
+# CFLAGS = -Os -ffunction-sections -fdata-sections -Wl,--gc-sections -s -flto -fuse-ld=lld # curr: ~29.1kB strip --strip-all: no change
 LDFLAGS = -lm
 
 JNI_INCLUDE = -I/usr/lib/jvm/java-17-openjdk-amd64/include -I/usr/lib/jvm/java-17-openjdk-amd64/include/linux
