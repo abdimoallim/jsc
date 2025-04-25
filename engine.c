@@ -866,6 +866,7 @@ void jsc_engine_parse_program(jsc_engine_state* state)
       state->bytecode, "main", "([Ljava/lang/String;)V",
       JSC_ACC_PUBLIC | JSC_ACC_STATIC, 10, 100);
 
+  // state->bytecode->major_version = 49;
   state->current_method = main_method;
   state->stack_size = 0;
   state->max_stack = 10;
@@ -1183,13 +1184,25 @@ void jsc_engine_parse_if_statement(jsc_engine_state* state)
     return;
   }
 
+  /* unbox the object and convert to boolean */
+  jsc_bytecode_emit_invoke_virtual(state->bytecode, state->current_method,
+                                   "java/lang/Object", "equals",
+                                   "(Ljava/lang/Object;)Z");
+  state->stack_size -= 1;
+
   uint16_t then_jump = jsc_engine_emit_jump(state, JSC_JVM_IFEQ);
+
+  /*mark*/ jsc_bytecode_emit(state->bytecode, state->current_method,
+                             JSC_JVM_NOP);
 
   jsc_engine_parse_statement(state);
 
   uint16_t else_jump = jsc_engine_emit_jump(state, JSC_JVM_GOTO);
 
   jsc_engine_patch_jump(state, then_jump);
+
+  /*mark*/ jsc_bytecode_emit(state->bytecode, state->current_method,
+                             JSC_JVM_NOP);
 
   if (jsc_engine_match(state, JSC_TOKEN_ELSE))
   {

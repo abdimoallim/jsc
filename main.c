@@ -9,8 +9,14 @@
 void test_engine_basic()
 {
   printf("testing execution...\n");
-  const char* source = "let n = 7 * 3; 4 * 4;";
-  //  "n = 'hello world';";
+  const char* source = "let n = 7 * 3;"
+                       "let k = false;"
+                      //  "let k = n * 4;"
+                      //  "n = n;"
+                      //  "n = n ** 2;"
+                      //  "n = p;"
+                      //  "let s = 'hello world';";
+                       "if (n > 3) { k = true; } else { k = false; }";
   jsc_value out = jsc_engine_eval(source);
   printf("output: %s\n", jsc_value_to_string(out));
   printf("done\n");
