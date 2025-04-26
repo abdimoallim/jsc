@@ -860,10 +860,12 @@ void jsc_engine_parse_program(jsc_engine_context* ctx)
   {
     jsc_engine_parse_declaration(ctx);
 
-    if (ctx->had_error)
-    {
-      return;
-    }
+    // @todo: propagate ctx->had_error elsewhere
+
+    // if (ctx->had_error)
+    // {
+    //   return;
+    // }
 
     ctx->stack_size = 0;
   }

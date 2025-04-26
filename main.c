@@ -11,8 +11,9 @@ void test_engine_basic()
   printf("testing execution...\n");
   const char* source = "let n = 7 * 3;"
                        "let F = false;"
-                       "let p = 8 >= 3;";
-                      //  "while (0) {}";
+                       "let p = n - 2;"
+                       "n = n - 2;";
+                      //  "while (true) {}";
                       //  "function add(a, b) { return a + b; }"
                       //  "let k = add(2, 3);";
                       //  "for (let i = 0; i < 3; i++) {}";
