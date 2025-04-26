@@ -21,13 +21,13 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-tokenizer.o: jsc_tokenizer.c jsc_tokenizer.h
+jsc_tokenizer.o: jsc_tokenizer.c jsc_tokenizer.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bytecode.o: jsc_bytecode.c jsc_bytecode.h
+jsc_bytecode.o: jsc_bytecode.c jsc_bytecode.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-engine.o: jsc_engine.c jsc_engine.h
+jsc_engine.o: jsc_engine.c jsc_engine.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 main.o: main.c jsc_tokenizer.h jsc_bytecode.h jsc_engine.h
