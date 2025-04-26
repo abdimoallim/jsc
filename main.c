@@ -2,21 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bytecode.h"
-#include "tokenizer.h"
-#include "engine.h"
+#include "jsc_bytecode.h"
+#include "jsc_tokenizer.h"
+#include "jsc_engine.h"
 
 void test_engine_basic()
 {
   printf("testing execution...\n");
   const char* source = "let n = 7 * 3;"
-                       "let k = false;"
-                      //  "let k = n * 4;"
-                      //  "n = n;"
-                      //  "n = n ** 2;"
-                      //  "n = p;"
-                      //  "let s = 'hello world';";
-                       "if (n > 3) { k = true; } else { k = false; }";
+                       "let F = false;"
+                       "let p = 8 >= 3;";
+                      //  "while (0) {}";
+                      //  "function add(a, b) { return a + b; }"
+                      //  "let k = add(2, 3);";
+                      //  "for (let i = 0; i < 3; i++) {}";
+                      //  "if (true) { n = 1; } else { n = 0; }";
   jsc_value out = jsc_engine_eval(source);
   printf("output: %s\n", jsc_value_to_string(out));
   printf("done\n");
@@ -26,7 +26,7 @@ void test_bytecode_basic()
 {
   printf("testing basic bytecode codegen...\n");
 
-  jsc_bytecode_state* state = jsc_bytecode_create_class(
+  jsc_bytecode_context* state = jsc_bytecode_create_class(
       "Basic", "java/lang/Object", JSC_ACC_PUBLIC | JSC_ACC_SUPER);
 
   if (!state)
@@ -118,7 +118,7 @@ void test_bytecode()
 {
   printf("testing bytecode module...\n");
 
-  jsc_bytecode_state* state = jsc_bytecode_create_class(
+  jsc_bytecode_context* state = jsc_bytecode_create_class(
       "TestClass", "java/lang/Object", JSC_ACC_PUBLIC | JSC_ACC_SUPER);
 
   if (!state)
@@ -516,7 +516,7 @@ void tokenize_and_print(const char* source, const char* description)
   printf("tokenizing %s:\n", description);
 
   size_t length = strlen(source);
-  jsc_tokenizer_state* state = jsc_tokenizer_init(source, length);
+  jsc_tokenizer_context* state = jsc_tokenizer_init(source, length);
 
   if (!state)
   {

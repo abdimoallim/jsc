@@ -194,9 +194,9 @@ typedef struct
   };
 } jsc_token;
 
-typedef struct jsc_tokenizer_state jsc_tokenizer_state;
+typedef struct jsc_tokenizer_context jsc_tokenizer_context;
 
-struct jsc_tokenizer_state
+struct jsc_tokenizer_context
 {
   const char* source;
   size_t source_length;
@@ -229,11 +229,11 @@ struct jsc_tokenizer_state
 };
 
 jsc_vector_level jsc_get_vector_level(void);
-jsc_tokenizer_state* jsc_tokenizer_init(const char* source, size_t length);
-void jsc_tokenizer_free(jsc_tokenizer_state* state);
-jsc_token jsc_next_token(jsc_tokenizer_state* state);
-bool jsc_tokenizer_has_error(jsc_tokenizer_state* state);
-const char* jsc_tokenizer_get_error(jsc_tokenizer_state* state);
+jsc_tokenizer_context* jsc_tokenizer_init(const char* source, size_t length);
+void jsc_tokenizer_free(jsc_tokenizer_context* ctx);
+jsc_token jsc_next_token(jsc_tokenizer_context* ctx);
+bool jsc_tokenizer_has_error(jsc_tokenizer_context* ctx);
+const char* jsc_tokenizer_get_error(jsc_tokenizer_context* ctx);
 const char* jsc_token_type_to_string(jsc_token_type type);
 bool jsc_token_is_keyword(jsc_token_type type);
 bool jsc_token_is_operator(jsc_token_type type);

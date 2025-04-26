@@ -43,7 +43,7 @@
 #define JSC_MAX_OPERAND_STACK 65535
 #define JSC_MAX_CODE_SIZE 65535
 
-typedef struct jsc_bytecode_state jsc_bytecode_state;
+typedef struct jsc_bytecode_context jsc_bytecode_context;
 typedef struct jsc_constant_pool_entry jsc_constant_pool_entry;
 typedef struct jsc_method jsc_method;
 typedef struct jsc_field jsc_field;
@@ -256,7 +256,7 @@ typedef enum
   JSC_JVM_JSR_W = 0xc9
 } jsc_jvm_opcode;
 
-struct jsc_bytecode_state
+struct jsc_bytecode_context
 {
   uint8_t* bytecode;
   size_t bytecode_size;
@@ -406,176 +406,178 @@ struct jsc_exception_table_entry
   uint16_t catch_type;
 };
 
-jsc_bytecode_state* jsc_bytecode_init(void);
-void jsc_bytecode_free(jsc_bytecode_state* state);
+jsc_bytecode_context* jsc_bytecode_init(void);
+void jsc_bytecode_free(jsc_bytecode_context* state);
 
-void jsc_bytecode_set_class_name(jsc_bytecode_state* state,
+void jsc_bytecode_set_class_name(jsc_bytecode_context* state,
                                  const char* class_name);
-void jsc_bytecode_set_super_class(jsc_bytecode_state* state,
+void jsc_bytecode_set_super_class(jsc_bytecode_context* state,
                                   const char* super_class_name);
-void jsc_bytecode_set_source_file(jsc_bytecode_state* state,
+void jsc_bytecode_set_source_file(jsc_bytecode_context* state,
                                   const char* source_file);
-void jsc_bytecode_set_access_flags(jsc_bytecode_state* state,
+void jsc_bytecode_set_access_flags(jsc_bytecode_context* state,
                                    uint16_t access_flags);
-void jsc_bytecode_set_version(jsc_bytecode_state* state, uint16_t major,
+void jsc_bytecode_set_version(jsc_bytecode_context* state, uint16_t major,
                               uint16_t minor);
 
-uint16_t jsc_bytecode_add_interface(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_interface(jsc_bytecode_context* state,
                                     const char* interface_name);
 
-uint16_t jsc_bytecode_add_utf8_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_utf8_constant(jsc_bytecode_context* state,
                                         const char* str);
-uint16_t jsc_bytecode_add_integer_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_integer_constant(jsc_bytecode_context* state,
                                            int32_t value);
-uint16_t jsc_bytecode_add_float_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_float_constant(jsc_bytecode_context* state,
                                          float value);
-uint16_t jsc_bytecode_add_long_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_long_constant(jsc_bytecode_context* state,
                                         int64_t value);
-uint16_t jsc_bytecode_add_double_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_double_constant(jsc_bytecode_context* state,
                                           double value);
-uint16_t jsc_bytecode_add_string_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_string_constant(jsc_bytecode_context* state,
                                           const char* str);
-uint16_t jsc_bytecode_add_class_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_class_constant(jsc_bytecode_context* state,
                                          const char* class_name);
-uint16_t jsc_bytecode_add_name_and_type_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_name_and_type_constant(jsc_bytecode_context* state,
                                                  const char* name,
                                                  const char* descriptor);
-uint16_t jsc_bytecode_add_field_reference(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_field_reference(jsc_bytecode_context* state,
                                           const char* class_name,
                                           const char* field_name,
                                           const char* field_descriptor);
-uint16_t jsc_bytecode_add_method_reference(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_method_reference(jsc_bytecode_context* state,
                                            const char* class_name,
                                            const char* method_name,
                                            const char* method_descriptor);
 uint16_t jsc_bytecode_add_interface_method_reference(
-    jsc_bytecode_state* state, const char* interface_name,
+    jsc_bytecode_context* state, const char* interface_name,
     const char* method_name, const char* method_descriptor);
 
-jsc_method* jsc_bytecode_add_method(jsc_bytecode_state* state, const char* name,
-                                    const char* descriptor,
+jsc_method* jsc_bytecode_add_method(jsc_bytecode_context* state,
+                                    const char* name, const char* descriptor,
                                     uint16_t access_flags);
-jsc_field* jsc_bytecode_add_field(jsc_bytecode_state* state, const char* name,
+jsc_field* jsc_bytecode_add_field(jsc_bytecode_context* state, const char* name,
                                   const char* descriptor,
                                   uint16_t access_flags);
 
-jsc_attribute* jsc_bytecode_add_attribute(jsc_bytecode_state* state,
+jsc_attribute* jsc_bytecode_add_attribute(jsc_bytecode_context* state,
                                           const char* name, uint32_t length);
-jsc_attribute* jsc_bytecode_add_method_attribute(jsc_bytecode_state* state,
+jsc_attribute* jsc_bytecode_add_method_attribute(jsc_bytecode_context* state,
                                                  jsc_method* method,
                                                  const char* name,
                                                  uint32_t length);
-jsc_attribute* jsc_bytecode_add_field_attribute(jsc_bytecode_state* state,
+jsc_attribute* jsc_bytecode_add_field_attribute(jsc_bytecode_context* state,
                                                 jsc_field* field,
                                                 const char* name,
                                                 uint32_t length);
 
-void jsc_bytecode_add_code_attribute(jsc_bytecode_state* state,
+void jsc_bytecode_add_code_attribute(jsc_bytecode_context* state,
                                      jsc_method* method, uint16_t max_stack,
                                      uint16_t max_locals, uint8_t* code,
                                      uint32_t code_length);
-void jsc_bytecode_add_exception_table_entry(jsc_bytecode_state* state,
+void jsc_bytecode_add_exception_table_entry(jsc_bytecode_context* state,
                                             jsc_attribute* code_attribute,
                                             uint16_t start_pc, uint16_t end_pc,
                                             uint16_t handler_pc,
                                             uint16_t catch_type);
-void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
+void jsc_bytecode_add_stackmap_frame(jsc_bytecode_context* state,
                                      jsc_attribute* code_attr,
                                      uint16_t byte_offset, uint8_t frame_type);
 
-uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer);
-bool jsc_bytecode_write_to_file(jsc_bytecode_state* state,
+uint32_t jsc_bytecode_write(jsc_bytecode_context* state, uint8_t** out_buffer);
+bool jsc_bytecode_write_to_file(jsc_bytecode_context* state,
                                 const char* filename);
 
-jsc_bytecode_state* jsc_bytecode_create_class(const char* class_name,
-                                              const char* super_class_name,
-                                              uint16_t access_flags);
-jsc_method* jsc_bytecode_create_method(jsc_bytecode_state* state,
+jsc_bytecode_context* jsc_bytecode_create_class(const char* class_name,
+                                                const char* super_class_name,
+                                                uint16_t access_flags);
+jsc_method* jsc_bytecode_create_method(jsc_bytecode_context* state,
                                        const char* name, const char* descriptor,
                                        uint16_t access_flags,
                                        uint16_t max_stack, uint16_t max_locals);
 
-void jsc_bytecode_emit(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit(jsc_bytecode_context* state, jsc_method* method,
                        uint8_t opcode);
-void jsc_bytecode_emit_u8(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_u8(jsc_bytecode_context* state, jsc_method* method,
                           uint8_t opcode, uint8_t operand);
-void jsc_bytecode_emit_u16(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_u16(jsc_bytecode_context* state, jsc_method* method,
                            uint8_t opcode, uint16_t operand);
-void jsc_bytecode_emit_jump(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_jump(jsc_bytecode_context* state, jsc_method* method,
                             uint8_t opcode, int16_t offset);
-void jsc_bytecode_emit_local_var(jsc_bytecode_state* state, jsc_method* method,
-                                 uint8_t opcode, uint16_t index);
-void jsc_bytecode_emit_const_load(jsc_bytecode_state* state, jsc_method* method,
-                                  uint16_t index);
-void jsc_bytecode_emit_invoke_virtual(jsc_bytecode_state* state,
+void jsc_bytecode_emit_local_var(jsc_bytecode_context* state,
+                                 jsc_method* method, uint8_t opcode,
+                                 uint16_t index);
+void jsc_bytecode_emit_const_load(jsc_bytecode_context* state,
+                                  jsc_method* method, uint16_t index);
+void jsc_bytecode_emit_invoke_virtual(jsc_bytecode_context* state,
                                       jsc_method* method,
                                       const char* class_name,
                                       const char* method_name,
                                       const char* descriptor);
-void jsc_bytecode_emit_invoke_special(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_special(jsc_bytecode_context* state,
                                       jsc_method* method,
                                       const char* class_name,
                                       const char* method_name,
                                       const char* descriptor);
-void jsc_bytecode_emit_invoke_static(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_static(jsc_bytecode_context* state,
                                      jsc_method* method, const char* class_name,
                                      const char* method_name,
                                      const char* descriptor);
-void jsc_bytecode_emit_invoke_interface(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_interface(jsc_bytecode_context* state,
                                         jsc_method* method,
                                         const char* interface_name,
                                         const char* method_name,
                                         const char* descriptor, uint8_t count);
-void jsc_bytecode_emit_field_access(jsc_bytecode_state* state,
+void jsc_bytecode_emit_field_access(jsc_bytecode_context* state,
                                     jsc_method* method, uint8_t opcode,
                                     const char* class_name,
                                     const char* field_name,
                                     const char* descriptor);
-void jsc_bytecode_emit_new(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_new(jsc_bytecode_context* state, jsc_method* method,
                            const char* class_name);
-void jsc_bytecode_emit_newarray(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_newarray(jsc_bytecode_context* state, jsc_method* method,
                                 uint8_t array_type);
-void jsc_bytecode_emit_anewarray(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_anewarray(jsc_bytecode_context* state,
+                                 jsc_method* method,
                                  const char* component_type);
-void jsc_bytecode_emit_return(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_return(jsc_bytecode_context* state, jsc_method* method,
                               char type);
 
 uint32_t jsc_bytecode_get_method_code_length(jsc_method* method);
 uint8_t* jsc_bytecode_get_method_code(jsc_method* method);
 uint32_t jsc_bytecode_get_method_code_offset(jsc_method* method);
 
-void jsc_bytecode_emit_constructor(jsc_bytecode_state* state,
+void jsc_bytecode_emit_constructor(jsc_bytecode_context* state,
                                    jsc_method* method, const char* super_class);
-void jsc_bytecode_emit_line_number(jsc_bytecode_state* state,
+void jsc_bytecode_emit_line_number(jsc_bytecode_context* state,
                                    jsc_method* method, uint16_t line_number,
                                    uint16_t start_pc);
-void jsc_bytecode_emit_local_variable(jsc_bytecode_state* state,
+void jsc_bytecode_emit_local_variable(jsc_bytecode_context* state,
                                       jsc_method* method, const char* name,
                                       const char* descriptor, uint16_t start_pc,
                                       uint16_t length, uint16_t index);
 
-void jsc_bytecode_emit_load_constant_int(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_int(jsc_bytecode_context* state,
                                          jsc_method* method, int32_t value);
-void jsc_bytecode_emit_load_constant_long(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_long(jsc_bytecode_context* state,
                                           jsc_method* method, int64_t value);
-void jsc_bytecode_emit_load_constant_float(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_float(jsc_bytecode_context* state,
                                            jsc_method* method, float value);
-void jsc_bytecode_emit_load_constant_double(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_double(jsc_bytecode_context* state,
                                             jsc_method* method, double value);
-void jsc_bytecode_emit_load_constant_string(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_string(jsc_bytecode_context* state,
                                             jsc_method* method,
                                             const char* value);
 
-void jsc_bytecode_emit_load_constant_int_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_int_boxed(jsc_bytecode_context* state,
                                                jsc_method* method,
                                                int32_t value);
-void jsc_bytecode_emit_load_constant_long_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_long_boxed(jsc_bytecode_context* state,
                                                 jsc_method* method,
                                                 int64_t value);
-void jsc_bytecode_emit_load_constant_float_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_float_boxed(jsc_bytecode_context* state,
                                                  jsc_method* method,
                                                  float value);
-void jsc_bytecode_emit_load_constant_double_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_double_boxed(jsc_bytecode_context* state,
                                                   jsc_method* method,
                                                   double value);
 

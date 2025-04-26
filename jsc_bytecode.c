@@ -1,4 +1,4 @@
-#include "bytecode.h"
+#include "jsc_bytecode.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -33,191 +33,191 @@ static void jsc_write_bytes(uint8_t** buffer, const uint8_t* data,
   *buffer += length;
 }
 
-jsc_bytecode_state* jsc_bytecode_init(void)
+jsc_bytecode_context* jsc_bytecode_init(void)
 {
-  jsc_bytecode_state* state =
-      (jsc_bytecode_state*)malloc(sizeof(jsc_bytecode_state));
+  jsc_bytecode_context* ctx =
+      (jsc_bytecode_context*)malloc(sizeof(jsc_bytecode_context));
 
-  if (!state)
+  if (!ctx)
   {
     return NULL;
   }
 
-  memset(state, 0, sizeof(jsc_bytecode_state));
+  memset(ctx, 0, sizeof(jsc_bytecode_context));
 
-  state->bytecode_capacity = (1 << 12);
-  state->bytecode = (uint8_t*)malloc(state->bytecode_capacity);
+  ctx->bytecode_capacity = (1 << 12);
+  ctx->bytecode = (uint8_t*)malloc(ctx->bytecode_capacity);
 
-  if (!state->bytecode)
+  if (!ctx->bytecode)
   {
-    free(state);
+    free(ctx);
     return NULL;
   }
 
-  state->major_version = 52;
-  state->minor_version = 0;
+  ctx->major_version = 52;
+  ctx->minor_version = 0;
 
-  state->constant_pool = NULL;
-  state->constant_pool_count = 1;
+  ctx->constant_pool = NULL;
+  ctx->constant_pool_count = 1;
 
-  state->methods = NULL;
-  state->method_count = 0;
+  ctx->methods = NULL;
+  ctx->method_count = 0;
 
-  state->fields = NULL;
-  state->field_count = 0;
+  ctx->fields = NULL;
+  ctx->field_count = 0;
 
-  state->attributes = NULL;
-  state->attribute_count = 0;
+  ctx->attributes = NULL;
+  ctx->attribute_count = 0;
 
-  state->interfaces = NULL;
-  state->interface_count = 0;
+  ctx->interfaces = NULL;
+  ctx->interface_count = 0;
 
-  state->access_flags = JSC_ACC_PUBLIC | JSC_ACC_SUPER;
+  ctx->access_flags = JSC_ACC_PUBLIC | JSC_ACC_SUPER;
 
-  return state;
+  return ctx;
 }
 
-void jsc_bytecode_free(jsc_bytecode_state* state)
+void jsc_bytecode_free(jsc_bytecode_context* ctx)
 {
-  if (!state)
+  if (!ctx)
   {
     return;
   }
 
-  if (state->bytecode)
+  if (ctx->bytecode)
   {
-    free(state->bytecode);
+    free(ctx->bytecode);
   }
 
-  if (state->class_name)
+  if (ctx->class_name)
   {
-    free(state->class_name);
+    free(ctx->class_name);
   }
 
-  if (state->source_file)
+  if (ctx->source_file)
   {
-    free(state->source_file);
+    free(ctx->source_file);
   }
 
-  if (state->super_class_name)
+  if (ctx->super_class_name)
   {
-    free(state->super_class_name);
+    free(ctx->super_class_name);
   }
 
-  if (state->interfaces)
+  if (ctx->interfaces)
   {
-    free(state->interfaces);
+    free(ctx->interfaces);
   }
 
-  if (state->constant_pool)
+  if (ctx->constant_pool)
   {
-    for (uint16_t i = 1; i < state->constant_pool_count; i++)
+    for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
     {
-      if (state->constant_pool[i].tag == JSC_CP_UTF8)
+      if (ctx->constant_pool[i].tag == JSC_CP_UTF8)
       {
-        free(state->constant_pool[i].utf8_info.bytes);
+        free(ctx->constant_pool[i].utf8_info.bytes);
       }
     }
 
-    free(state->constant_pool);
+    free(ctx->constant_pool);
   }
 
-  if (state->methods)
+  if (ctx->methods)
   {
-    for (uint16_t i = 0; i < state->method_count; i++)
+    for (uint16_t i = 0; i < ctx->method_count; i++)
     {
-      if (state->methods[i].attributes)
+      if (ctx->methods[i].attributes)
       {
-        for (uint16_t j = 0; j < state->methods[i].attribute_count; j++)
+        for (uint16_t j = 0; j < ctx->methods[i].attribute_count; j++)
         {
-          free(state->methods[i].attributes[j].info);
+          free(ctx->methods[i].attributes[j].info);
         }
 
-        free(state->methods[i].attributes);
+        free(ctx->methods[i].attributes);
       }
     }
 
-    free(state->methods);
+    free(ctx->methods);
   }
 
-  if (state->fields)
+  if (ctx->fields)
   {
-    for (uint16_t i = 0; i < state->field_count; i++)
+    for (uint16_t i = 0; i < ctx->field_count; i++)
     {
-      if (state->fields[i].attributes)
+      if (ctx->fields[i].attributes)
       {
-        for (uint16_t j = 0; j < state->fields[i].attribute_count; j++)
+        for (uint16_t j = 0; j < ctx->fields[i].attribute_count; j++)
         {
-          free(state->fields[i].attributes[j].info);
+          free(ctx->fields[i].attributes[j].info);
         }
 
-        free(state->fields[i].attributes);
+        free(ctx->fields[i].attributes);
       }
     }
 
-    free(state->fields);
+    free(ctx->fields);
   }
 
-  if (state->attributes)
+  if (ctx->attributes)
   {
-    for (uint16_t i = 0; i < state->attribute_count; i++)
+    for (uint16_t i = 0; i < ctx->attribute_count; i++)
     {
-      free(state->attributes[i].info);
+      free(ctx->attributes[i].info);
     }
 
-    free(state->attributes);
+    free(ctx->attributes);
   }
 
-  free(state);
+  free(ctx);
 }
 
-void jsc_bytecode_set_class_name(jsc_bytecode_state* state,
+void jsc_bytecode_set_class_name(jsc_bytecode_context* ctx,
                                  const char* class_name)
 {
-  if (state->class_name)
+  if (ctx->class_name)
   {
-    free(state->class_name);
+    free(ctx->class_name);
   }
 
-  state->class_name = strdup(class_name);
+  ctx->class_name = strdup(class_name);
 }
 
-void jsc_bytecode_set_super_class(jsc_bytecode_state* state,
+void jsc_bytecode_set_super_class(jsc_bytecode_context* ctx,
                                   const char* super_class_name)
 {
-  if (state->super_class_name)
+  if (ctx->super_class_name)
   {
-    free(state->super_class_name);
+    free(ctx->super_class_name);
   }
 
-  state->super_class_name = strdup(super_class_name);
+  ctx->super_class_name = strdup(super_class_name);
 }
 
-void jsc_bytecode_set_source_file(jsc_bytecode_state* state,
+void jsc_bytecode_set_source_file(jsc_bytecode_context* ctx,
                                   const char* source_file)
 {
-  if (state->source_file)
+  if (ctx->source_file)
   {
-    free(state->source_file);
+    free(ctx->source_file);
   }
 
-  state->source_file = strdup(source_file);
+  ctx->source_file = strdup(source_file);
 }
 
-void jsc_bytecode_set_access_flags(jsc_bytecode_state* state,
+void jsc_bytecode_set_access_flags(jsc_bytecode_context* ctx,
                                    uint16_t access_flags)
 {
-  state->access_flags = access_flags;
+  ctx->access_flags = access_flags;
 }
 
-void jsc_bytecode_set_version(jsc_bytecode_state* state, uint16_t major,
+void jsc_bytecode_set_version(jsc_bytecode_context* ctx, uint16_t major,
                               uint16_t minor)
 {
-  state->major_version = major;
-  state->minor_version = minor;
+  ctx->major_version = major;
+  ctx->minor_version = minor;
 }
 
-uint16_t jsc_bytecode_add_utf8_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_utf8_constant(jsc_bytecode_context* ctx,
                                         const char* str)
 {
   if (!str)
@@ -232,282 +232,282 @@ uint16_t jsc_bytecode_add_utf8_constant(jsc_bytecode_state* state,
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_UTF8 &&
-        state->constant_pool[i].utf8_info.length == len &&
-        memcmp(state->constant_pool[i].utf8_info.bytes, str, len) == 0)
+    if (ctx->constant_pool[i].tag == JSC_CP_UTF8 &&
+        ctx->constant_pool[i].utf8_info.length == len &&
+        memcmp(ctx->constant_pool[i].utf8_info.bytes, str, len) == 0)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_UTF8;
   entry->utf8_info.length = (uint16_t)len;
   entry->utf8_info.bytes = (uint8_t*)malloc(len);
   memcpy(entry->utf8_info.bytes, str, len);
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_integer_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_integer_constant(jsc_bytecode_context* ctx,
                                            int32_t value)
 {
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_INTEGER &&
-        state->constant_pool[i].integer_info.value == value)
+    if (ctx->constant_pool[i].tag == JSC_CP_INTEGER &&
+        ctx->constant_pool[i].integer_info.value == value)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_INTEGER;
   entry->integer_info.value = value;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_float_constant(jsc_bytecode_state* state, float value)
+uint16_t jsc_bytecode_add_float_constant(jsc_bytecode_context* ctx, float value)
 {
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_FLOAT &&
-        state->constant_pool[i].float_info.value == value)
+    if (ctx->constant_pool[i].tag == JSC_CP_FLOAT &&
+        ctx->constant_pool[i].float_info.value == value)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_FLOAT;
   entry->float_info.value = value;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_long_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_long_constant(jsc_bytecode_context* ctx,
                                         int64_t value)
 {
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_LONG &&
-        state->constant_pool[i].long_info.value == value)
+    if (ctx->constant_pool[i].tag == JSC_CP_LONG &&
+        ctx->constant_pool[i].long_info.value == value)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 2) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 2) * sizeof(jsc_constant_pool_entry));
 
-  uint16_t index = state->constant_pool_count;
-  jsc_constant_pool_entry* entry = &state->constant_pool[index];
+  uint16_t index = ctx->constant_pool_count;
+  jsc_constant_pool_entry* entry = &ctx->constant_pool[index];
   entry->tag = JSC_CP_LONG;
   entry->long_info.value = value;
 
-  state->constant_pool_count += 2;
+  ctx->constant_pool_count += 2;
 
   return index;
 }
 
-uint16_t jsc_bytecode_add_double_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_double_constant(jsc_bytecode_context* ctx,
                                           double value)
 {
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_DOUBLE &&
-        state->constant_pool[i].double_info.value == value)
+    if (ctx->constant_pool[i].tag == JSC_CP_DOUBLE &&
+        ctx->constant_pool[i].double_info.value == value)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 2) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 2) * sizeof(jsc_constant_pool_entry));
 
-  uint16_t index = state->constant_pool_count;
-  jsc_constant_pool_entry* entry = &state->constant_pool[index];
+  uint16_t index = ctx->constant_pool_count;
+  jsc_constant_pool_entry* entry = &ctx->constant_pool[index];
   entry->tag = JSC_CP_DOUBLE;
   entry->double_info.value = value;
 
-  state->constant_pool_count += 2;
+  ctx->constant_pool_count += 2;
 
   return index;
 }
 
-uint16_t jsc_bytecode_add_string_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_string_constant(jsc_bytecode_context* ctx,
                                           const char* str)
 {
-  uint16_t utf8_index = jsc_bytecode_add_utf8_constant(state, str);
+  uint16_t utf8_index = jsc_bytecode_add_utf8_constant(ctx, str);
 
   if (utf8_index == 0)
   {
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_STRING &&
-        state->constant_pool[i].string_info.string_index == utf8_index)
+    if (ctx->constant_pool[i].tag == JSC_CP_STRING &&
+        ctx->constant_pool[i].string_info.string_index == utf8_index)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_STRING;
   entry->string_info.string_index = utf8_index;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_class_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_class_constant(jsc_bytecode_context* ctx,
                                          const char* class_name)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, class_name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, class_name);
 
   if (name_index == 0)
   {
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_CLASS &&
-        state->constant_pool[i].class_info.name_index == name_index)
+    if (ctx->constant_pool[i].tag == JSC_CP_CLASS &&
+        ctx->constant_pool[i].class_info.name_index == name_index)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_CLASS;
   entry->class_info.name_index = name_index;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_name_and_type_constant(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_name_and_type_constant(jsc_bytecode_context* ctx,
                                                  const char* name,
                                                  const char* descriptor)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
 
   if (name_index == 0)
   {
     return 0;
   }
 
-  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(state, descriptor);
+  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(ctx, descriptor);
 
   if (descriptor_index == 0)
   {
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_NAME_AND_TYPE &&
-        state->constant_pool[i].name_and_type_info.name_index == name_index &&
-        state->constant_pool[i].name_and_type_info.descriptor_index ==
+    if (ctx->constant_pool[i].tag == JSC_CP_NAME_AND_TYPE &&
+        ctx->constant_pool[i].name_and_type_info.name_index == name_index &&
+        ctx->constant_pool[i].name_and_type_info.descriptor_index ==
             descriptor_index)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_NAME_AND_TYPE;
   entry->name_and_type_info.name_index = name_index;
   entry->name_and_type_info.descriptor_index = descriptor_index;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_field_reference(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_field_reference(jsc_bytecode_context* ctx,
                                           const char* class_name,
                                           const char* field_name,
                                           const char* field_descriptor)
 {
-  uint16_t class_index = jsc_bytecode_add_class_constant(state, class_name);
+  uint16_t class_index = jsc_bytecode_add_class_constant(ctx, class_name);
   if (class_index == 0)
   {
     return 0;
   }
 
   uint16_t name_and_type_index = jsc_bytecode_add_name_and_type_constant(
-      state, field_name, field_descriptor);
+      ctx, field_name, field_descriptor);
 
   if (name_and_type_index == 0)
   {
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_FIELDREF &&
-        state->constant_pool[i].fieldref_info.class_index == class_index &&
-        state->constant_pool[i].fieldref_info.name_and_type_index ==
+    if (ctx->constant_pool[i].tag == JSC_CP_FIELDREF &&
+        ctx->constant_pool[i].fieldref_info.class_index == class_index &&
+        ctx->constant_pool[i].fieldref_info.name_and_type_index ==
             name_and_type_index)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_FIELDREF;
   entry->fieldref_info.class_index = class_index;
   entry->fieldref_info.name_and_type_index = name_and_type_index;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_method_reference(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_method_reference(jsc_bytecode_context* ctx,
                                            const char* class_name,
                                            const char* method_name,
                                            const char* method_descriptor)
 {
-  uint16_t class_index = jsc_bytecode_add_class_constant(state, class_name);
+  uint16_t class_index = jsc_bytecode_add_class_constant(ctx, class_name);
 
   if (class_index == 0)
   {
@@ -515,42 +515,42 @@ uint16_t jsc_bytecode_add_method_reference(jsc_bytecode_state* state,
   }
 
   uint16_t name_and_type_index = jsc_bytecode_add_name_and_type_constant(
-      state, method_name, method_descriptor);
+      ctx, method_name, method_descriptor);
 
   if (name_and_type_index == 0)
   {
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_METHODREF &&
-        state->constant_pool[i].methodref_info.class_index == class_index &&
-        state->constant_pool[i].methodref_info.name_and_type_index ==
+    if (ctx->constant_pool[i].tag == JSC_CP_METHODREF &&
+        ctx->constant_pool[i].methodref_info.class_index == class_index &&
+        ctx->constant_pool[i].methodref_info.name_and_type_index ==
             name_and_type_index)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_METHODREF;
   entry->methodref_info.class_index = class_index;
   entry->methodref_info.name_and_type_index = name_and_type_index;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
 uint16_t jsc_bytecode_add_interface_method_reference(
-    jsc_bytecode_state* state, const char* interface_name,
+    jsc_bytecode_context* ctx, const char* interface_name,
     const char* method_name, const char* method_descriptor)
 {
-  uint16_t class_index = jsc_bytecode_add_class_constant(state, interface_name);
+  uint16_t class_index = jsc_bytecode_add_class_constant(ctx, interface_name);
 
   if (class_index == 0)
   {
@@ -558,79 +558,79 @@ uint16_t jsc_bytecode_add_interface_method_reference(
   }
 
   uint16_t name_and_type_index = jsc_bytecode_add_name_and_type_constant(
-      state, method_name, method_descriptor);
+      ctx, method_name, method_descriptor);
 
   if (name_and_type_index == 0)
   {
     return 0;
   }
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    if (state->constant_pool[i].tag == JSC_CP_INTERFACE_METHODREF &&
-        state->constant_pool[i].interface_methodref_info.class_index ==
+    if (ctx->constant_pool[i].tag == JSC_CP_INTERFACE_METHODREF &&
+        ctx->constant_pool[i].interface_methodref_info.class_index ==
             class_index &&
-        state->constant_pool[i].interface_methodref_info.name_and_type_index ==
+        ctx->constant_pool[i].interface_methodref_info.name_and_type_index ==
             name_and_type_index)
     {
       return i;
     }
   }
 
-  state->constant_pool = (jsc_constant_pool_entry*)realloc(
-      state->constant_pool,
-      (state->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
+  ctx->constant_pool = (jsc_constant_pool_entry*)realloc(
+      ctx->constant_pool,
+      (ctx->constant_pool_count + 1) * sizeof(jsc_constant_pool_entry));
 
   jsc_constant_pool_entry* entry =
-      &state->constant_pool[state->constant_pool_count];
+      &ctx->constant_pool[ctx->constant_pool_count];
   entry->tag = JSC_CP_INTERFACE_METHODREF;
   entry->interface_methodref_info.class_index = class_index;
   entry->interface_methodref_info.name_and_type_index = name_and_type_index;
 
-  return state->constant_pool_count++;
+  return ctx->constant_pool_count++;
 }
 
-uint16_t jsc_bytecode_add_interface(jsc_bytecode_state* state,
+uint16_t jsc_bytecode_add_interface(jsc_bytecode_context* ctx,
                                     const char* interface_name)
 {
-  uint16_t index = jsc_bytecode_add_class_constant(state, interface_name);
+  uint16_t index = jsc_bytecode_add_class_constant(ctx, interface_name);
 
   if (index == 0)
   {
     return 0;
   }
 
-  state->interfaces = (uint16_t*)realloc(
-      state->interfaces, (state->interface_count + 1) * sizeof(uint16_t));
+  ctx->interfaces = (uint16_t*)realloc(
+      ctx->interfaces, (ctx->interface_count + 1) * sizeof(uint16_t));
 
-  state->interfaces[state->interface_count] = index;
-  state->interface_count++;
+  ctx->interfaces[ctx->interface_count] = index;
+  ctx->interface_count++;
 
   return index;
 }
 
-jsc_method* jsc_bytecode_add_method(jsc_bytecode_state* state, const char* name,
+jsc_method* jsc_bytecode_add_method(jsc_bytecode_context* ctx, const char* name,
                                     const char* descriptor,
                                     uint16_t access_flags)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
 
   if (name_index == 0)
   {
     return NULL;
   }
 
-  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(state, descriptor);
+  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(ctx, descriptor);
 
   if (descriptor_index == 0)
   {
     return NULL;
   }
 
-  state->methods = (jsc_method*)realloc(
-      state->methods, (state->method_count + 1) * sizeof(jsc_method));
+  ctx->methods = (jsc_method*)realloc(ctx->methods, (ctx->method_count + 1) *
+                                                        sizeof(jsc_method));
 
-  jsc_method* method = &state->methods[state->method_count];
+  jsc_method* method = &ctx->methods[ctx->method_count];
 
   method->access_flags = access_flags;
   method->name_index = name_index;
@@ -638,32 +638,32 @@ jsc_method* jsc_bytecode_add_method(jsc_bytecode_state* state, const char* name,
   method->attributes = NULL;
   method->attribute_count = 0;
 
-  state->method_count++;
+  ctx->method_count++;
 
   return method;
 }
 
-jsc_field* jsc_bytecode_add_field(jsc_bytecode_state* state, const char* name,
+jsc_field* jsc_bytecode_add_field(jsc_bytecode_context* ctx, const char* name,
                                   const char* descriptor, uint16_t access_flags)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
 
   if (name_index == 0)
   {
     return NULL;
   }
 
-  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(state, descriptor);
+  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(ctx, descriptor);
 
   if (descriptor_index == 0)
   {
     return NULL;
   }
 
-  state->fields = (jsc_field*)realloc(state->fields, (state->field_count + 1) *
-                                                         sizeof(jsc_field));
+  ctx->fields = (jsc_field*)realloc(ctx->fields,
+                                    (ctx->field_count + 1) * sizeof(jsc_field));
 
-  jsc_field* field = &state->fields[state->field_count];
+  jsc_field* field = &ctx->fields[ctx->field_count];
 
   field->access_flags = access_flags;
   field->name_index = name_index;
@@ -671,41 +671,41 @@ jsc_field* jsc_bytecode_add_field(jsc_bytecode_state* state, const char* name,
   field->attributes = NULL;
   field->attribute_count = 0;
 
-  state->field_count++;
+  ctx->field_count++;
 
   return field;
 }
 
-jsc_attribute* jsc_bytecode_add_attribute(jsc_bytecode_state* state,
+jsc_attribute* jsc_bytecode_add_attribute(jsc_bytecode_context* ctx,
                                           const char* name, uint32_t length)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
 
   if (name_index == 0)
   {
     return NULL;
   }
 
-  state->attributes = (jsc_attribute*)realloc(
-      state->attributes, (state->attribute_count + 1) * sizeof(jsc_attribute));
+  ctx->attributes = (jsc_attribute*)realloc(
+      ctx->attributes, (ctx->attribute_count + 1) * sizeof(jsc_attribute));
 
-  jsc_attribute* attribute = &state->attributes[state->attribute_count];
+  jsc_attribute* attribute = &ctx->attributes[ctx->attribute_count];
 
   attribute->name_index = name_index;
   attribute->length = length;
   attribute->info = (uint8_t*)malloc(length);
 
-  state->attribute_count++;
+  ctx->attribute_count++;
 
   return attribute;
 }
 
-jsc_attribute* jsc_bytecode_add_method_attribute(jsc_bytecode_state* state,
+jsc_attribute* jsc_bytecode_add_method_attribute(jsc_bytecode_context* ctx,
                                                  jsc_method* method,
                                                  const char* name,
                                                  uint32_t length)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
 
   if (name_index == 0)
     return NULL;
@@ -744,12 +744,12 @@ jsc_attribute* jsc_bytecode_add_method_attribute(jsc_bytecode_state* state,
   return attr;
 }
 
-jsc_attribute* jsc_bytecode_add_field_attribute(jsc_bytecode_state* state,
+jsc_attribute* jsc_bytecode_add_field_attribute(jsc_bytecode_context* ctx,
                                                 jsc_field* field,
                                                 const char* name,
                                                 uint32_t length)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
 
   if (name_index == 0)
   {
@@ -769,7 +769,7 @@ jsc_attribute* jsc_bytecode_add_field_attribute(jsc_bytecode_state* state,
   return attribute;
 }
 
-void jsc_bytecode_add_code_attribute(jsc_bytecode_state* state,
+void jsc_bytecode_add_code_attribute(jsc_bytecode_context* ctx,
                                      jsc_method* method, uint16_t max_stack,
                                      uint16_t max_locals, uint8_t* code,
                                      uint32_t code_length)
@@ -777,7 +777,7 @@ void jsc_bytecode_add_code_attribute(jsc_bytecode_state* state,
   uint32_t attr_length = 2 + 2 + 4 + code_length + 2 + 2;
 
   jsc_attribute* code_attr =
-      jsc_bytecode_add_method_attribute(state, method, "Code", attr_length);
+      jsc_bytecode_add_method_attribute(ctx, method, "Code", attr_length);
   if (!code_attr)
   {
     return;
@@ -813,7 +813,7 @@ void jsc_bytecode_add_code_attribute(jsc_bytecode_state* state,
   memcpy(p, &attributes_count_be, 2);
 }
 
-void jsc_bytecode_add_exception_table_entry(jsc_bytecode_state* state,
+void jsc_bytecode_add_exception_table_entry(jsc_bytecode_context* ctx,
                                             jsc_attribute* code_attribute,
                                             uint16_t start_pc, uint16_t end_pc,
                                             uint16_t handler_pc,
@@ -885,7 +885,7 @@ void jsc_bytecode_add_exception_table_entry(jsc_bytecode_state* state,
  *  entries, add a new frame, update attribute length and replace attribute info.
  */
 
-void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
+void jsc_bytecode_add_stackmap_frame(jsc_bytecode_context* ctx,
                                      jsc_attribute* code_attr,
                                      uint16_t byte_offset, uint8_t frame_type)
 {
@@ -914,9 +914,9 @@ void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
     attr_name_index = be16toh(attr_name_index);
 
     if (attr_name_index > 0 &&
-        state->constant_pool[attr_name_index].tag == JSC_CP_UTF8 &&
-        state->constant_pool[attr_name_index].utf8_info.length == 13 &&
-        memcmp(state->constant_pool[attr_name_index].utf8_info.bytes,
+        ctx->constant_pool[attr_name_index].tag == JSC_CP_UTF8 &&
+        ctx->constant_pool[attr_name_index].utf8_info.length == 13 &&
+        memcmp(ctx->constant_pool[attr_name_index].utf8_info.bytes,
                "StackMapTable", 13) == 0)
     {
       attr_ptr += 2;
@@ -959,7 +959,7 @@ void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
   }
 
   uint16_t stackmap_name_index = /* if none is found, define one */
-      jsc_bytecode_add_utf8_constant(state, "StackMapTable");
+      jsc_bytecode_add_utf8_constant(ctx, "StackMapTable");
 
   uint32_t
       stackmap_attr_length = /* SAME frame (type 0) for no change in locals/stack */
@@ -1003,7 +1003,7 @@ void jsc_bytecode_add_stackmap_frame(jsc_bytecode_state* state,
   free(stackmap_info);
 }
 
-uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
+uint32_t jsc_bytecode_write(jsc_bytecode_context* ctx, uint8_t** out_buffer)
 {
   uint32_t total_size = 0;
 
@@ -1012,15 +1012,15 @@ uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
   total_size += 2;
   total_size += 2;
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
     total_size += 1;
 
-    switch (state->constant_pool[i].tag)
+    switch (ctx->constant_pool[i].tag)
     {
     case JSC_CP_UTF8:
       total_size += 2;
-      total_size += state->constant_pool[i].utf8_info.length;
+      total_size += ctx->constant_pool[i].utf8_info.length;
       break;
     case JSC_CP_INTEGER:
     case JSC_CP_FLOAT:
@@ -1058,49 +1058,49 @@ uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
   total_size += 2;
 
   total_size += 2;
-  total_size += 2 * state->interface_count;
+  total_size += 2 * ctx->interface_count;
 
   total_size += 2;
 
-  for (uint16_t i = 0; i < state->field_count; i++)
+  for (uint16_t i = 0; i < ctx->field_count; i++)
   {
     total_size += 2;
     total_size += 2;
     total_size += 2;
     total_size += 2;
 
-    for (uint16_t j = 0; j < state->fields[i].attribute_count; j++)
+    for (uint16_t j = 0; j < ctx->fields[i].attribute_count; j++)
     {
       total_size += 2;
       total_size += 4;
-      total_size += state->fields[i].attributes[j].length;
+      total_size += ctx->fields[i].attributes[j].length;
     }
   }
 
   total_size += 2;
 
-  for (uint16_t i = 0; i < state->method_count; i++)
+  for (uint16_t i = 0; i < ctx->method_count; i++)
   {
     total_size += 2;
     total_size += 2;
     total_size += 2;
     total_size += 2;
 
-    for (uint16_t j = 0; j < state->methods[i].attribute_count; j++)
+    for (uint16_t j = 0; j < ctx->methods[i].attribute_count; j++)
     {
       total_size += 2;
       total_size += 4;
-      total_size += state->methods[i].attributes[j].length;
+      total_size += ctx->methods[i].attributes[j].length;
     }
   }
 
   total_size += 2;
 
-  for (uint16_t i = 0; i < state->attribute_count; i++)
+  for (uint16_t i = 0; i < ctx->attribute_count; i++)
   {
     total_size += 2;
     total_size += 4;
-    total_size += state->attributes[i].length;
+    total_size += ctx->attributes[i].length;
   }
 
   uint8_t* buffer = (uint8_t*)malloc(total_size);
@@ -1115,35 +1115,35 @@ uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
   uint32_t magic = 0xCAFEBABE;
   jsc_write_u32(&p, magic);
 
-  jsc_write_u16(&p, state->minor_version);
-  jsc_write_u16(&p, state->major_version);
+  jsc_write_u16(&p, ctx->minor_version);
+  jsc_write_u16(&p, ctx->major_version);
 
-  jsc_write_u16(&p, state->constant_pool_count);
+  jsc_write_u16(&p, ctx->constant_pool_count);
 
-  for (uint16_t i = 1; i < state->constant_pool_count; i++)
+  for (uint16_t i = 1; i < ctx->constant_pool_count; i++)
   {
-    jsc_write_u8(&p, state->constant_pool[i].tag);
+    jsc_write_u8(&p, ctx->constant_pool[i].tag);
 
-    switch (state->constant_pool[i].tag)
+    switch (ctx->constant_pool[i].tag)
     {
     case JSC_CP_UTF8:
-      jsc_write_u16(&p, state->constant_pool[i].utf8_info.length);
-      jsc_write_bytes(&p, state->constant_pool[i].utf8_info.bytes,
-                      state->constant_pool[i].utf8_info.length);
+      jsc_write_u16(&p, ctx->constant_pool[i].utf8_info.length);
+      jsc_write_bytes(&p, ctx->constant_pool[i].utf8_info.bytes,
+                      ctx->constant_pool[i].utf8_info.length);
       break;
     case JSC_CP_INTEGER:
-      jsc_write_u32(&p, (uint32_t)state->constant_pool[i].integer_info.value);
+      jsc_write_u32(&p, (uint32_t)ctx->constant_pool[i].integer_info.value);
       break;
     case JSC_CP_FLOAT:
     {
       uint32_t float_bits;
-      memcpy(&float_bits, &state->constant_pool[i].float_info.value, 4);
+      memcpy(&float_bits, &ctx->constant_pool[i].float_info.value, 4);
       jsc_write_u32(&p, float_bits);
       break;
     }
     case JSC_CP_LONG:
     {
-      uint64_t long_value = (uint64_t)state->constant_pool[i].long_info.value;
+      uint64_t long_value = (uint64_t)ctx->constant_pool[i].long_info.value;
       jsc_write_u32(&p, (uint32_t)(long_value >> 32));
       jsc_write_u32(&p, (uint32_t)long_value);
       i++;
@@ -1152,113 +1152,112 @@ uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
     case JSC_CP_DOUBLE:
     {
       uint64_t double_bits;
-      memcpy(&double_bits, &state->constant_pool[i].double_info.value, 8);
+      memcpy(&double_bits, &ctx->constant_pool[i].double_info.value, 8);
       jsc_write_u32(&p, (uint32_t)(double_bits >> 32));
       jsc_write_u32(&p, (uint32_t)double_bits);
       i++;
       break;
     }
     case JSC_CP_CLASS:
-      jsc_write_u16(&p, state->constant_pool[i].class_info.name_index);
+      jsc_write_u16(&p, ctx->constant_pool[i].class_info.name_index);
       break;
     case JSC_CP_STRING:
-      jsc_write_u16(&p, state->constant_pool[i].string_info.string_index);
+      jsc_write_u16(&p, ctx->constant_pool[i].string_info.string_index);
       break;
     case JSC_CP_FIELDREF:
-      jsc_write_u16(&p, state->constant_pool[i].fieldref_info.class_index);
+      jsc_write_u16(&p, ctx->constant_pool[i].fieldref_info.class_index);
       jsc_write_u16(&p,
-                    state->constant_pool[i].fieldref_info.name_and_type_index);
+                    ctx->constant_pool[i].fieldref_info.name_and_type_index);
       break;
     case JSC_CP_METHODREF:
-      jsc_write_u16(&p, state->constant_pool[i].methodref_info.class_index);
+      jsc_write_u16(&p, ctx->constant_pool[i].methodref_info.class_index);
       jsc_write_u16(&p,
-                    state->constant_pool[i].methodref_info.name_and_type_index);
+                    ctx->constant_pool[i].methodref_info.name_and_type_index);
       break;
     case JSC_CP_INTERFACE_METHODREF:
-      jsc_write_u16(
-          &p, state->constant_pool[i].interface_methodref_info.class_index);
+      jsc_write_u16(&p,
+                    ctx->constant_pool[i].interface_methodref_info.class_index);
       jsc_write_u16(
           &p,
-          state->constant_pool[i].interface_methodref_info.name_and_type_index);
+          ctx->constant_pool[i].interface_methodref_info.name_and_type_index);
       break;
     case JSC_CP_NAME_AND_TYPE:
-      jsc_write_u16(&p, state->constant_pool[i].name_and_type_info.name_index);
-      jsc_write_u16(
-          &p, state->constant_pool[i].name_and_type_info.descriptor_index);
+      jsc_write_u16(&p, ctx->constant_pool[i].name_and_type_info.name_index);
+      jsc_write_u16(&p,
+                    ctx->constant_pool[i].name_and_type_info.descriptor_index);
       break;
     case JSC_CP_METHOD_HANDLE:
-      jsc_write_u8(&p,
-                   state->constant_pool[i].method_handle_info.reference_kind);
+      jsc_write_u8(&p, ctx->constant_pool[i].method_handle_info.reference_kind);
       jsc_write_u16(&p,
-                    state->constant_pool[i].method_handle_info.reference_index);
+                    ctx->constant_pool[i].method_handle_info.reference_index);
       break;
     case JSC_CP_METHOD_TYPE:
       jsc_write_u16(&p,
-                    state->constant_pool[i].method_type_info.descriptor_index);
+                    ctx->constant_pool[i].method_type_info.descriptor_index);
       break;
     case JSC_CP_INVOKE_DYNAMIC:
-      jsc_write_u16(&p, state->constant_pool[i]
+      jsc_write_u16(&p, ctx->constant_pool[i]
                             .invoke_dynamic_info.bootstrap_method_attr_index);
       jsc_write_u16(
-          &p, state->constant_pool[i].invoke_dynamic_info.name_and_type_index);
+          &p, ctx->constant_pool[i].invoke_dynamic_info.name_and_type_index);
       break;
     }
   }
 
-  jsc_write_u16(&p, state->access_flags);
-  jsc_write_u16(&p, state->this_class);
-  jsc_write_u16(&p, state->super_class);
+  jsc_write_u16(&p, ctx->access_flags);
+  jsc_write_u16(&p, ctx->this_class);
+  jsc_write_u16(&p, ctx->super_class);
 
-  jsc_write_u16(&p, state->interface_count);
+  jsc_write_u16(&p, ctx->interface_count);
 
-  for (uint16_t i = 0; i < state->interface_count; i++)
+  for (uint16_t i = 0; i < ctx->interface_count; i++)
   {
-    jsc_write_u16(&p, state->interfaces[i]);
+    jsc_write_u16(&p, ctx->interfaces[i]);
   }
 
-  jsc_write_u16(&p, state->field_count);
+  jsc_write_u16(&p, ctx->field_count);
 
-  for (uint16_t i = 0; i < state->field_count; i++)
+  for (uint16_t i = 0; i < ctx->field_count; i++)
   {
-    jsc_write_u16(&p, state->fields[i].access_flags);
-    jsc_write_u16(&p, state->fields[i].name_index);
-    jsc_write_u16(&p, state->fields[i].descriptor_index);
-    jsc_write_u16(&p, state->fields[i].attribute_count);
+    jsc_write_u16(&p, ctx->fields[i].access_flags);
+    jsc_write_u16(&p, ctx->fields[i].name_index);
+    jsc_write_u16(&p, ctx->fields[i].descriptor_index);
+    jsc_write_u16(&p, ctx->fields[i].attribute_count);
 
-    for (uint16_t j = 0; j < state->fields[i].attribute_count; j++)
+    for (uint16_t j = 0; j < ctx->fields[i].attribute_count; j++)
     {
-      jsc_write_u16(&p, state->fields[i].attributes[j].name_index);
-      jsc_write_u32(&p, state->fields[i].attributes[j].length);
-      jsc_write_bytes(&p, state->fields[i].attributes[j].info,
-                      state->fields[i].attributes[j].length);
+      jsc_write_u16(&p, ctx->fields[i].attributes[j].name_index);
+      jsc_write_u32(&p, ctx->fields[i].attributes[j].length);
+      jsc_write_bytes(&p, ctx->fields[i].attributes[j].info,
+                      ctx->fields[i].attributes[j].length);
     }
   }
 
-  jsc_write_u16(&p, state->method_count);
+  jsc_write_u16(&p, ctx->method_count);
 
-  for (uint16_t i = 0; i < state->method_count; i++)
+  for (uint16_t i = 0; i < ctx->method_count; i++)
   {
-    jsc_write_u16(&p, state->methods[i].access_flags);
-    jsc_write_u16(&p, state->methods[i].name_index);
-    jsc_write_u16(&p, state->methods[i].descriptor_index);
-    jsc_write_u16(&p, state->methods[i].attribute_count);
+    jsc_write_u16(&p, ctx->methods[i].access_flags);
+    jsc_write_u16(&p, ctx->methods[i].name_index);
+    jsc_write_u16(&p, ctx->methods[i].descriptor_index);
+    jsc_write_u16(&p, ctx->methods[i].attribute_count);
 
-    for (uint16_t j = 0; j < state->methods[i].attribute_count; j++)
+    for (uint16_t j = 0; j < ctx->methods[i].attribute_count; j++)
     {
-      jsc_write_u16(&p, state->methods[i].attributes[j].name_index);
-      jsc_write_u32(&p, state->methods[i].attributes[j].length);
-      jsc_write_bytes(&p, state->methods[i].attributes[j].info,
-                      state->methods[i].attributes[j].length);
+      jsc_write_u16(&p, ctx->methods[i].attributes[j].name_index);
+      jsc_write_u32(&p, ctx->methods[i].attributes[j].length);
+      jsc_write_bytes(&p, ctx->methods[i].attributes[j].info,
+                      ctx->methods[i].attributes[j].length);
     }
   }
 
-  jsc_write_u16(&p, state->attribute_count);
+  jsc_write_u16(&p, ctx->attribute_count);
 
-  for (uint16_t i = 0; i < state->attribute_count; i++)
+  for (uint16_t i = 0; i < ctx->attribute_count; i++)
   {
-    jsc_write_u16(&p, state->attributes[i].name_index);
-    jsc_write_u32(&p, state->attributes[i].length);
-    jsc_write_bytes(&p, state->attributes[i].info, state->attributes[i].length);
+    jsc_write_u16(&p, ctx->attributes[i].name_index);
+    jsc_write_u32(&p, ctx->attributes[i].length);
+    jsc_write_bytes(&p, ctx->attributes[i].info, ctx->attributes[i].length);
   }
 
   *out_buffer = buffer;
@@ -1266,10 +1265,10 @@ uint32_t jsc_bytecode_write(jsc_bytecode_state* state, uint8_t** out_buffer)
   return total_size;
 }
 
-bool jsc_bytecode_write_to_file(jsc_bytecode_state* state, const char* filename)
+bool jsc_bytecode_write_to_file(jsc_bytecode_context* ctx, const char* filename)
 {
   uint8_t* buffer;
-  uint32_t size = jsc_bytecode_write(state, &buffer);
+  uint32_t size = jsc_bytecode_write(ctx, &buffer);
 
   if (size == 0)
   {
@@ -1292,40 +1291,40 @@ bool jsc_bytecode_write_to_file(jsc_bytecode_state* state, const char* filename)
   return written == size;
 }
 
-jsc_bytecode_state* jsc_bytecode_create_class(const char* class_name,
-                                              const char* super_class_name,
-                                              uint16_t access_flags)
+jsc_bytecode_context* jsc_bytecode_create_class(const char* class_name,
+                                                const char* super_class_name,
+                                                uint16_t access_flags)
 {
-  jsc_bytecode_state* state = jsc_bytecode_init();
+  jsc_bytecode_context* ctx = jsc_bytecode_init();
 
-  if (!state)
+  if (!ctx)
   {
     return NULL;
   }
 
-  jsc_bytecode_set_class_name(state, class_name);
-  jsc_bytecode_set_super_class(state, super_class_name ? super_class_name
-                                                       : "java/lang/Object");
-  jsc_bytecode_set_access_flags(state, access_flags);
+  jsc_bytecode_set_class_name(ctx, class_name);
+  jsc_bytecode_set_super_class(ctx, super_class_name ? super_class_name
+                                                     : "java/lang/Object");
+  jsc_bytecode_set_access_flags(ctx, access_flags);
 
-  uint16_t class_name_idx = jsc_bytecode_add_utf8_constant(state, class_name);
-  state->this_class = jsc_bytecode_add_class_constant(state, class_name);
+  uint16_t class_name_idx = jsc_bytecode_add_utf8_constant(ctx, class_name);
+  ctx->this_class = jsc_bytecode_add_class_constant(ctx, class_name);
 
   uint16_t super_name_idx = jsc_bytecode_add_utf8_constant(
-      state, super_class_name ? super_class_name : "java/lang/Object");
-  state->super_class = jsc_bytecode_add_class_constant(
-      state, super_class_name ? super_class_name : "java/lang/Object");
+      ctx, super_class_name ? super_class_name : "java/lang/Object");
+  ctx->super_class = jsc_bytecode_add_class_constant(
+      ctx, super_class_name ? super_class_name : "java/lang/Object");
 
-  return state;
+  return ctx;
 }
 
-jsc_method* jsc_bytecode_create_method(jsc_bytecode_state* state,
+jsc_method* jsc_bytecode_create_method(jsc_bytecode_context* ctx,
                                        const char* name, const char* descriptor,
                                        uint16_t access_flags,
                                        uint16_t max_stack, uint16_t max_locals)
 {
   jsc_method* method =
-      jsc_bytecode_add_method(state, name, descriptor, access_flags);
+      jsc_bytecode_add_method(ctx, name, descriptor, access_flags);
 
   if (!method)
     return NULL;
@@ -1334,7 +1333,7 @@ jsc_method* jsc_bytecode_create_method(jsc_bytecode_state* state,
 
   uint32_t attr_length = 2 + 2 + 4 + code_length + 2 + 2;
 
-  uint16_t code_index = jsc_bytecode_add_utf8_constant(state, "Code");
+  uint16_t code_index = jsc_bytecode_add_utf8_constant(ctx, "Code");
   method->attributes = malloc(sizeof(jsc_attribute));
 
   if (!method->attributes)
@@ -1386,7 +1385,7 @@ jsc_method* jsc_bytecode_create_method(jsc_bytecode_state* state,
  *          update code length, copy existing code, add new opcode, copy exception
  *          table & attributes from after the code, replace attribute info.
  */
-void jsc_bytecode_emit(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit(jsc_bytecode_context* ctx, jsc_method* method,
                        uint8_t opcode)
 {
   if (!method || method->attribute_count == 0)
@@ -1397,7 +1396,7 @@ void jsc_bytecode_emit(jsc_bytecode_state* state, jsc_method* method,
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
     const jsc_constant_pool_entry* entry =
-        &state->constant_pool[method->attributes[i].name_index];
+        &ctx->constant_pool[method->attributes[i].name_index];
     if (entry->tag == JSC_CP_UTF8 && entry->utf8_info.length == 4 &&
         memcmp(entry->utf8_info.bytes, "Code", 4) == 0)
     {
@@ -1441,7 +1440,7 @@ void jsc_bytecode_emit(jsc_bytecode_state* state, jsc_method* method,
   code_attr->length = new_attribute_length;
 }
 
-void jsc_bytecode_emit_u8(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_u8(jsc_bytecode_context* ctx, jsc_method* method,
                           uint8_t opcode, uint8_t operand)
 {
   if (!method || method->attribute_count == 0)
@@ -1453,10 +1452,9 @@ void jsc_bytecode_emit_u8(jsc_bytecode_state* state, jsc_method* method,
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
     uint16_t name_index = method->attributes[i].name_index;
-    if (name_index > 0 && state->constant_pool[name_index].tag == JSC_CP_UTF8 &&
-        state->constant_pool[name_index].utf8_info.length == 4 &&
-        memcmp(state->constant_pool[name_index].utf8_info.bytes, "Code", 4) ==
-            0)
+    if (name_index > 0 && ctx->constant_pool[name_index].tag == JSC_CP_UTF8 &&
+        ctx->constant_pool[name_index].utf8_info.length == 4 &&
+        memcmp(ctx->constant_pool[name_index].utf8_info.bytes, "Code", 4) == 0)
     {
       code_attr = &method->attributes[i];
       break;
@@ -1499,7 +1497,7 @@ void jsc_bytecode_emit_u8(jsc_bytecode_state* state, jsc_method* method,
   code_attr->length = new_attr_length;
 }
 
-void jsc_bytecode_emit_u16(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_u16(jsc_bytecode_context* ctx, jsc_method* method,
                            uint8_t opcode, uint16_t operand)
 {
   if (!method || method->attribute_count == 0)
@@ -1511,10 +1509,9 @@ void jsc_bytecode_emit_u16(jsc_bytecode_state* state, jsc_method* method,
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
     uint16_t name_index = method->attributes[i].name_index;
-    if (name_index > 0 && state->constant_pool[name_index].tag == JSC_CP_UTF8 &&
-        state->constant_pool[name_index].utf8_info.length == 4 &&
-        memcmp(state->constant_pool[name_index].utf8_info.bytes, "Code", 4) ==
-            0)
+    if (name_index > 0 && ctx->constant_pool[name_index].tag == JSC_CP_UTF8 &&
+        ctx->constant_pool[name_index].utf8_info.length == 4 &&
+        memcmp(ctx->constant_pool[name_index].utf8_info.bytes, "Code", 4) == 0)
     {
       code_attr = &method->attributes[i];
       break;
@@ -1559,13 +1556,13 @@ void jsc_bytecode_emit_u16(jsc_bytecode_state* state, jsc_method* method,
   code_attr->length = new_attr_length;
 }
 
-void jsc_bytecode_emit_jump(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_jump(jsc_bytecode_context* ctx, jsc_method* method,
                             uint8_t opcode, int16_t offset)
 {
-  jsc_bytecode_emit_u16(state, method, opcode, (uint16_t)offset);
+  jsc_bytecode_emit_u16(ctx, method, opcode, (uint16_t)offset);
 }
 
-void jsc_bytecode_emit_local_var(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_local_var(jsc_bytecode_context* ctx, jsc_method* method,
                                  uint8_t opcode, uint16_t index)
 {
   if (index <= 3 && (opcode == JSC_JVM_ILOAD || opcode == JSC_JVM_LLOAD ||
@@ -1574,7 +1571,7 @@ void jsc_bytecode_emit_local_var(jsc_bytecode_state* state, jsc_method* method,
   {
     uint8_t short_opcode =
         (opcode - JSC_JVM_ILOAD) * 4 + JSC_JVM_ILOAD_0 + index;
-    jsc_bytecode_emit(state, method, short_opcode);
+    jsc_bytecode_emit(ctx, method, short_opcode);
   }
   else if (index <= 3 &&
            (opcode == JSC_JVM_ISTORE || opcode == JSC_JVM_LSTORE ||
@@ -1583,80 +1580,79 @@ void jsc_bytecode_emit_local_var(jsc_bytecode_state* state, jsc_method* method,
   {
     uint8_t short_opcode =
         (opcode - JSC_JVM_ISTORE) * 4 + JSC_JVM_ISTORE_0 + index;
-    jsc_bytecode_emit(state, method, short_opcode);
+    jsc_bytecode_emit(ctx, method, short_opcode);
   }
   else if (index < 256)
   {
-    jsc_bytecode_emit_u8(state, method, opcode, (uint8_t)index);
+    jsc_bytecode_emit_u8(ctx, method, opcode, (uint8_t)index);
   }
   else
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_WIDE);
-    jsc_bytecode_emit_u16(state, method, opcode, index);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_WIDE);
+    jsc_bytecode_emit_u16(ctx, method, opcode, index);
   }
 }
 
-void jsc_bytecode_emit_const_load(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_const_load(jsc_bytecode_context* ctx, jsc_method* method,
                                   uint16_t index)
 {
   if (index < 256)
   {
-    jsc_bytecode_emit_u8(state, method, JSC_JVM_LDC, (uint8_t)index);
+    jsc_bytecode_emit_u8(ctx, method, JSC_JVM_LDC, (uint8_t)index);
   }
   else
   {
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC_W, index);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_LDC_W, index);
   }
 }
 
-void jsc_bytecode_emit_invoke_virtual(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_virtual(jsc_bytecode_context* ctx,
                                       jsc_method* method,
                                       const char* class_name,
                                       const char* method_name,
                                       const char* descriptor)
 {
   uint16_t method_ref = jsc_bytecode_add_method_reference(
-      state, class_name, method_name, descriptor);
-  jsc_bytecode_emit_u16(state, method, JSC_JVM_INVOKEVIRTUAL, method_ref);
+      ctx, class_name, method_name, descriptor);
+  jsc_bytecode_emit_u16(ctx, method, JSC_JVM_INVOKEVIRTUAL, method_ref);
 }
 
-void jsc_bytecode_emit_invoke_special(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_special(jsc_bytecode_context* ctx,
                                       jsc_method* method,
                                       const char* class_name,
                                       const char* method_name,
                                       const char* descriptor)
 {
   uint16_t method_ref = jsc_bytecode_add_method_reference(
-      state, class_name, method_name, descriptor);
-  jsc_bytecode_emit_u16(state, method, JSC_JVM_INVOKESPECIAL, method_ref);
+      ctx, class_name, method_name, descriptor);
+  jsc_bytecode_emit_u16(ctx, method, JSC_JVM_INVOKESPECIAL, method_ref);
 }
 
-void jsc_bytecode_emit_invoke_static(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_static(jsc_bytecode_context* ctx,
                                      jsc_method* method, const char* class_name,
                                      const char* method_name,
                                      const char* descriptor)
 {
   uint16_t method_ref = jsc_bytecode_add_method_reference(
-      state, class_name, method_name, descriptor);
-  jsc_bytecode_emit_u16(state, method, JSC_JVM_INVOKESTATIC, method_ref);
+      ctx, class_name, method_name, descriptor);
+  jsc_bytecode_emit_u16(ctx, method, JSC_JVM_INVOKESTATIC, method_ref);
 }
 
-void jsc_bytecode_emit_invoke_interface(jsc_bytecode_state* state,
+void jsc_bytecode_emit_invoke_interface(jsc_bytecode_context* ctx,
                                         jsc_method* method,
                                         const char* interface_name,
                                         const char* method_name,
                                         const char* descriptor, uint8_t count)
 {
   uint16_t method_ref = jsc_bytecode_add_interface_method_reference(
-      state, interface_name, method_name, descriptor);
+      ctx, interface_name, method_name, descriptor);
 
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
     jsc_attribute* attr = &method->attributes[i];
     uint16_t name_index = attr->name_index;
 
-    const jsc_constant_pool_entry* name_entry =
-        &state->constant_pool[name_index];
+    const jsc_constant_pool_entry* name_entry = &ctx->constant_pool[name_index];
     if (name_entry->tag == JSC_CP_UTF8 && name_entry->utf8_info.length == 4 &&
         memcmp(name_entry->utf8_info.bytes, "Code", 4) == 0)
     {
@@ -1684,39 +1680,39 @@ void jsc_bytecode_emit_invoke_interface(jsc_bytecode_state* state,
   }
 }
 
-void jsc_bytecode_emit_field_access(jsc_bytecode_state* state,
+void jsc_bytecode_emit_field_access(jsc_bytecode_context* ctx,
                                     jsc_method* method, uint8_t opcode,
                                     const char* class_name,
                                     const char* field_name,
                                     const char* descriptor)
 {
-  uint16_t field_ref = jsc_bytecode_add_field_reference(state, class_name,
-                                                        field_name, descriptor);
-  jsc_bytecode_emit_u16(state, method, opcode, field_ref);
+  uint16_t field_ref =
+      jsc_bytecode_add_field_reference(ctx, class_name, field_name, descriptor);
+  jsc_bytecode_emit_u16(ctx, method, opcode, field_ref);
 }
 
-void jsc_bytecode_emit_new(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_new(jsc_bytecode_context* ctx, jsc_method* method,
                            const char* class_name)
 {
-  uint16_t class_index = jsc_bytecode_add_class_constant(state, class_name);
-  jsc_bytecode_emit_u16(state, method, JSC_JVM_NEW, class_index);
+  uint16_t class_index = jsc_bytecode_add_class_constant(ctx, class_name);
+  jsc_bytecode_emit_u16(ctx, method, JSC_JVM_NEW, class_index);
 }
 
-void jsc_bytecode_emit_newarray(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_newarray(jsc_bytecode_context* ctx, jsc_method* method,
                                 uint8_t array_type)
 {
-  jsc_bytecode_emit_u8(state, method, JSC_JVM_NEWARRAY, array_type);
+  jsc_bytecode_emit_u8(ctx, method, JSC_JVM_NEWARRAY, array_type);
 }
 
-void jsc_bytecode_emit_anewarray(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_anewarray(jsc_bytecode_context* ctx, jsc_method* method,
                                  const char* component_type)
 {
   uint16_t component_index =
-      jsc_bytecode_add_class_constant(state, component_type);
-  jsc_bytecode_emit_u16(state, method, JSC_JVM_ANEWARRAY, component_index);
+      jsc_bytecode_add_class_constant(ctx, component_type);
+  jsc_bytecode_emit_u16(ctx, method, JSC_JVM_ANEWARRAY, component_index);
 }
 
-void jsc_bytecode_emit_return(jsc_bytecode_state* state, jsc_method* method,
+void jsc_bytecode_emit_return(jsc_bytecode_context* ctx, jsc_method* method,
                               char type)
 {
   uint8_t opcode;
@@ -1745,7 +1741,7 @@ void jsc_bytecode_emit_return(jsc_bytecode_state* state, jsc_method* method,
     opcode = JSC_JVM_RETURN;
   }
 
-  jsc_bytecode_emit(state, method, opcode);
+  jsc_bytecode_emit(ctx, method, opcode);
 }
 
 uint32_t jsc_bytecode_get_method_code_length(jsc_method* method)
@@ -1791,15 +1787,15 @@ uint32_t jsc_bytecode_get_method_code_offset(jsc_method* method)
   return 0;
 }
 
-void jsc_bytecode_emit_constructor(jsc_bytecode_state* state,
+void jsc_bytecode_emit_constructor(jsc_bytecode_context* ctx,
                                    jsc_method* method, const char* super_class)
 {
-  jsc_bytecode_emit(state, method, JSC_JVM_ALOAD_0);
-  jsc_bytecode_emit_invoke_special(state, method, super_class, "<init>", "()V");
-  jsc_bytecode_emit(state, method, JSC_JVM_RETURN);
+  jsc_bytecode_emit(ctx, method, JSC_JVM_ALOAD_0);
+  jsc_bytecode_emit_invoke_special(ctx, method, super_class, "<init>", "()V");
+  jsc_bytecode_emit(ctx, method, JSC_JVM_RETURN);
 }
 
-void jsc_bytecode_emit_line_number(jsc_bytecode_state* state,
+void jsc_bytecode_emit_line_number(jsc_bytecode_context* ctx,
                                    jsc_method* method, uint16_t line_number,
                                    uint16_t start_pc)
 {
@@ -1808,8 +1804,7 @@ void jsc_bytecode_emit_line_number(jsc_bytecode_state* state,
     jsc_attribute* attr = &method->attributes[i];
     uint16_t name_index = attr->name_index;
 
-    const jsc_constant_pool_entry* name_entry =
-        &state->constant_pool[name_index];
+    const jsc_constant_pool_entry* name_entry = &ctx->constant_pool[name_index];
 
     if (name_entry->tag == JSC_CP_UTF8 && name_entry->utf8_info.length == 4 &&
         memcmp(name_entry->utf8_info.bytes, "Code", 4) == 0)
@@ -1843,7 +1838,7 @@ void jsc_bytecode_emit_line_number(jsc_bytecode_state* state,
         attr_name_index = be16toh(attr_name_index);
 
         const jsc_constant_pool_entry* attr_name_entry =
-            &state->constant_pool[attr_name_index];
+            &ctx->constant_pool[attr_name_index];
 
         if (attr_name_entry->tag == JSC_CP_UTF8 &&
             attr_name_entry->utf8_info.length == 15 &&
@@ -1866,7 +1861,7 @@ void jsc_bytecode_emit_line_number(jsc_bytecode_state* state,
       if (line_number_table_index == 0)
       {
         uint16_t name_index =
-            jsc_bytecode_add_utf8_constant(state, "LineNumberTable");
+            jsc_bytecode_add_utf8_constant(ctx, "LineNumberTable");
         uint32_t attr_length = 2 + 4;
         attr->length += attr_length;
         attr->info = (uint8_t*)realloc(attr->info, attr->length);
@@ -1905,13 +1900,13 @@ void jsc_bytecode_emit_line_number(jsc_bytecode_state* state,
   }
 }
 
-void jsc_bytecode_emit_local_variable(jsc_bytecode_state* state,
+void jsc_bytecode_emit_local_variable(jsc_bytecode_context* ctx,
                                       jsc_method* method, const char* name,
                                       const char* descriptor, uint16_t start_pc,
                                       uint16_t length, uint16_t index)
 {
-  uint16_t name_index = jsc_bytecode_add_utf8_constant(state, name);
-  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(state, descriptor);
+  uint16_t name_index = jsc_bytecode_add_utf8_constant(ctx, name);
+  uint16_t descriptor_index = jsc_bytecode_add_utf8_constant(ctx, descriptor);
 
   for (uint16_t i = 0; i < method->attribute_count; i++)
   {
@@ -1919,7 +1914,7 @@ void jsc_bytecode_emit_local_variable(jsc_bytecode_state* state,
     uint16_t attr_name_index = attr->name_index;
 
     const jsc_constant_pool_entry* name_entry =
-        &state->constant_pool[attr_name_index];
+        &ctx->constant_pool[attr_name_index];
     if (name_entry->tag == JSC_CP_UTF8 && name_entry->utf8_info.length == 4 &&
         memcmp(name_entry->utf8_info.bytes, "Code", 4) == 0)
     {
@@ -1953,7 +1948,7 @@ void jsc_bytecode_emit_local_variable(jsc_bytecode_state* state,
         attr_name_index = be16toh(attr_name_index);
 
         const jsc_constant_pool_entry* attr_name_entry =
-            &state->constant_pool[attr_name_index];
+            &ctx->constant_pool[attr_name_index];
         if (attr_name_entry->tag == JSC_CP_UTF8 &&
             attr_name_entry->utf8_info.length == 18 &&
             memcmp(attr_name_entry->utf8_info.bytes, "LocalVariableTable",
@@ -2017,7 +2012,7 @@ void jsc_bytecode_emit_local_variable(jsc_bytecode_state* state,
       if (!found)
       {
         uint16_t table_name_index =
-            jsc_bytecode_add_utf8_constant(state, "LocalVariableTable");
+            jsc_bytecode_add_utf8_constant(ctx, "LocalVariableTable");
         uint32_t attr_length = 2 + 10;
 
         p = attr->info + 2 + 2 + 4 + code_length + 2 +
@@ -2081,198 +2076,198 @@ void jsc_bytecode_emit_local_variable(jsc_bytecode_state* state,
   }
 }
 
-void jsc_bytecode_emit_load_constant_int(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_int(jsc_bytecode_context* ctx,
                                          jsc_method* method, int32_t value)
 {
   if (value >= -1 && value <= 5)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_ICONST_0 + value);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_ICONST_0 + value);
   }
   else if (value >= -128 && value <= 127)
   {
-    jsc_bytecode_emit_u8(state, method, JSC_JVM_BIPUSH, (uint8_t)value);
+    jsc_bytecode_emit_u8(ctx, method, JSC_JVM_BIPUSH, (uint8_t)value);
   }
   else if (value >= -32768 && value <= 32767)
   {
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_SIPUSH, (uint16_t)value);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_SIPUSH, (uint16_t)value);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_integer_constant(state, value);
-    jsc_bytecode_emit_const_load(state, method, const_index);
+    uint16_t const_index = jsc_bytecode_add_integer_constant(ctx, value);
+    jsc_bytecode_emit_const_load(ctx, method, const_index);
   }
 }
 
-void jsc_bytecode_emit_load_constant_long(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_long(jsc_bytecode_context* ctx,
                                           jsc_method* method, int64_t value)
 {
   if (value == 0)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_LCONST_0);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_LCONST_0);
   }
   else if (value == 1)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_LCONST_1);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_LCONST_1);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_long_constant(state, value);
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC2_W, const_index);
+    uint16_t const_index = jsc_bytecode_add_long_constant(ctx, value);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_LDC2_W, const_index);
   }
 }
 
-void jsc_bytecode_emit_load_constant_float(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_float(jsc_bytecode_context* ctx,
                                            jsc_method* method, float value)
 {
   if (value == 0.0f)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_0);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_FCONST_0);
   }
   else if (value == 1.0f)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_1);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_FCONST_1);
   }
   else if (value == 2.0f)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_2);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_FCONST_2);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_float_constant(state, value);
-    jsc_bytecode_emit_const_load(state, method, const_index);
+    uint16_t const_index = jsc_bytecode_add_float_constant(ctx, value);
+    jsc_bytecode_emit_const_load(ctx, method, const_index);
   }
 }
 
-void jsc_bytecode_emit_load_constant_double(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_double(jsc_bytecode_context* ctx,
                                             jsc_method* method, double value)
 {
   if (value == 0.0)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_DCONST_0);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_DCONST_0);
   }
   else if (value == 1.0)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_DCONST_1);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_DCONST_1);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_double_constant(state, value);
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC2_W, const_index);
+    uint16_t const_index = jsc_bytecode_add_double_constant(ctx, value);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_LDC2_W, const_index);
   }
 }
 
-void jsc_bytecode_emit_load_constant_string(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_string(jsc_bytecode_context* ctx,
                                             jsc_method* method,
                                             const char* value)
 {
-  uint16_t const_index = jsc_bytecode_add_string_constant(state, value);
-  jsc_bytecode_emit_const_load(state, method, const_index);
+  uint16_t const_index = jsc_bytecode_add_string_constant(ctx, value);
+  jsc_bytecode_emit_const_load(ctx, method, const_index);
 }
 
-void jsc_bytecode_emit_load_constant_int_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_int_boxed(jsc_bytecode_context* ctx,
                                                jsc_method* method,
                                                int32_t value)
 {
-  jsc_bytecode_emit_new(state, method, "java/lang/Integer");
-  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+  jsc_bytecode_emit_new(ctx, method, "java/lang/Integer");
+  jsc_bytecode_emit(ctx, method, JSC_JVM_DUP);
 
   if (value >= -1 && value <= 5)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_ICONST_0 + value);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_ICONST_0 + value);
   }
   else if (value >= -128 && value <= 127)
   {
-    jsc_bytecode_emit_u8(state, method, JSC_JVM_BIPUSH, (uint8_t)value);
+    jsc_bytecode_emit_u8(ctx, method, JSC_JVM_BIPUSH, (uint8_t)value);
   }
   else if (value >= -32768 && value <= 32767)
   {
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_SIPUSH, (uint16_t)value);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_SIPUSH, (uint16_t)value);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_integer_constant(state, value);
-    jsc_bytecode_emit_const_load(state, method, const_index);
+    uint16_t const_index = jsc_bytecode_add_integer_constant(ctx, value);
+    jsc_bytecode_emit_const_load(ctx, method, const_index);
   }
 
-  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Integer", "<init>",
+  jsc_bytecode_emit_invoke_special(ctx, method, "java/lang/Integer", "<init>",
                                    "(I)V");
 }
 
-void jsc_bytecode_emit_load_constant_long_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_long_boxed(jsc_bytecode_context* ctx,
                                                 jsc_method* method,
                                                 int64_t value)
 {
-  jsc_bytecode_emit_new(state, method, "java/lang/Long");
-  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+  jsc_bytecode_emit_new(ctx, method, "java/lang/Long");
+  jsc_bytecode_emit(ctx, method, JSC_JVM_DUP);
 
   if (value == 0)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_LCONST_0);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_LCONST_0);
   }
   else if (value == 1)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_LCONST_1);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_LCONST_1);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_long_constant(state, value);
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC2_W, const_index);
+    uint16_t const_index = jsc_bytecode_add_long_constant(ctx, value);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_LDC2_W, const_index);
   }
 
-  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Long", "<init>",
+  jsc_bytecode_emit_invoke_special(ctx, method, "java/lang/Long", "<init>",
                                    "(J)V");
 }
 
-void jsc_bytecode_emit_load_constant_float_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_float_boxed(jsc_bytecode_context* ctx,
                                                  jsc_method* method,
                                                  float value)
 {
-  jsc_bytecode_emit_new(state, method, "java/lang/Float");
-  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+  jsc_bytecode_emit_new(ctx, method, "java/lang/Float");
+  jsc_bytecode_emit(ctx, method, JSC_JVM_DUP);
 
   if (value == 0.0f)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_0);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_FCONST_0);
   }
   else if (value == 1.0f)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_1);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_FCONST_1);
   }
   else if (value == 2.0f)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_FCONST_2);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_FCONST_2);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_float_constant(state, value);
-    jsc_bytecode_emit_const_load(state, method, const_index);
+    uint16_t const_index = jsc_bytecode_add_float_constant(ctx, value);
+    jsc_bytecode_emit_const_load(ctx, method, const_index);
   }
 
-  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Float", "<init>",
+  jsc_bytecode_emit_invoke_special(ctx, method, "java/lang/Float", "<init>",
                                    "(F)V");
 }
 
-void jsc_bytecode_emit_load_constant_double_boxed(jsc_bytecode_state* state,
+void jsc_bytecode_emit_load_constant_double_boxed(jsc_bytecode_context* ctx,
                                                   jsc_method* method,
                                                   double value)
 {
-  jsc_bytecode_emit_new(state, method, "java/lang/Double");
-  jsc_bytecode_emit(state, method, JSC_JVM_DUP);
+  jsc_bytecode_emit_new(ctx, method, "java/lang/Double");
+  jsc_bytecode_emit(ctx, method, JSC_JVM_DUP);
 
   if (value == 0.0)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_DCONST_0);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_DCONST_0);
   }
   else if (value == 1.0)
   {
-    jsc_bytecode_emit(state, method, JSC_JVM_DCONST_1);
+    jsc_bytecode_emit(ctx, method, JSC_JVM_DCONST_1);
   }
   else
   {
-    uint16_t const_index = jsc_bytecode_add_double_constant(state, value);
-    jsc_bytecode_emit_u16(state, method, JSC_JVM_LDC2_W, const_index);
+    uint16_t const_index = jsc_bytecode_add_double_constant(ctx, value);
+    jsc_bytecode_emit_u16(ctx, method, JSC_JVM_LDC2_W, const_index);
   }
 
-  jsc_bytecode_emit_invoke_special(state, method, "java/lang/Double", "<init>",
+  jsc_bytecode_emit_invoke_special(ctx, method, "java/lang/Double", "<init>",
                                    "(D)V");
 }

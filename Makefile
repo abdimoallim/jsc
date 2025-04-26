@@ -12,7 +12,7 @@ ifeq ($(shell uname -s),Darwin)
 	CFLAGS += -Wno-deprecated-declarations
 endif
 
-SRCS = tokenizer.c bytecode.c engine.c main.c
+SRCS = jsc_tokenizer.c jsc_bytecode.c jsc_engine.c main.c
 OBJS = $(SRCS:.c=.o)
 TARGET = jsc
 
@@ -21,16 +21,16 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-tokenizer.o: tokenizer.c tokenizer.h
+tokenizer.o: jsc_tokenizer.c jsc_tokenizer.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bytecode.o: bytecode.c bytecode.h
+bytecode.o: jsc_bytecode.c jsc_bytecode.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-engine.o: engine.c engine.h
+engine.o: jsc_engine.c jsc_engine.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-main.o: main.c tokenizer.h bytecode.h engine.h
+main.o: main.c jsc_tokenizer.h jsc_bytecode.h jsc_engine.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
