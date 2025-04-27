@@ -10,14 +10,15 @@ void test_engine_basic()
 {
   printf("testing execution...\n");
   const char* source = "let n = 7 * 3;"
-                       "let F = false;"
+                       "let f = false;"
                        "let p = n - 2;"
-                       "n = n - 2;";
+                       "n = n - 2;"
+                        "if (n > 3) { n = 1; } else { n = 0; }";
+                      //  "let k = n.toString();";
                       //  "while (true) {}";
                       //  "function add(a, b) { return a + b; }"
                       //  "let k = add(2, 3);";
                       //  "for (let i = 0; i < 3; i++) {}";
-                      //  "if (true) { n = 1; } else { n = 0; }";
   jsc_value out = jsc_engine_eval(source);
   printf("output: %s\n", jsc_value_to_string(out));
   printf("done\n");

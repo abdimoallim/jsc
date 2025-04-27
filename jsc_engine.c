@@ -850,7 +850,8 @@ void jsc_engine_parse_program(jsc_engine_context* ctx)
       ctx->bytecode, "main", "([Ljava/lang/String;)V",
       JSC_ACC_PUBLIC | JSC_ACC_STATIC, 10, 100);
 
-  // ctx->bytecode->major_version = 49;
+  ctx->bytecode->major_version = 49;
+  ctx->bytecode->minor_version = 0;
   ctx->current_method = main_method;
   ctx->stack_size = 0;
   ctx->max_stack = 10;
